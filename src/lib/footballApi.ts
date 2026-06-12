@@ -30,7 +30,7 @@ export async function getMatches(): Promise<Match[]> {
 export function getNextSweepstakeMatch(matches: Match[], teamNames: string[]): Match | null {
   const upcoming = matches.filter(
     m =>
-      (m.status === 'SCHEDULED' || m.status === 'TIMED' || m.status === 'LIVE' || m.status === 'IN_PLAY') &&
+      (m.status === 'SCHEDULED' || m.status === 'TIMED' || m.status === 'LIVE' || m.status === 'IN_PLAY' || m.status === 'PAUSED') &&
       (teamNames.includes(m.homeTeam.name) || teamNames.includes(m.awayTeam.name))
   );
 
