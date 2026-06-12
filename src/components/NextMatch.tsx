@@ -1,14 +1,5 @@
 import type { Match, Participant } from '@/lib/types';
-
-const STAGE_LABELS: Record<string, string> = {
-  GROUP_STAGE: 'Group Stage',
-  LAST_32: 'Round of 32',
-  LAST_16: 'Round of 16',
-  QUARTER_FINALS: 'Quarter-Final',
-  SEMI_FINALS: 'Semi-Final',
-  THIRD_PLACE: '3rd Place Play-off',
-  FINAL: 'Final',
-};
+import { STAGE_LABELS } from '@/lib/stageLabels';
 
 function formatKickoff(utcDate: string): string {
   return new Date(utcDate).toLocaleString('en-GB', {

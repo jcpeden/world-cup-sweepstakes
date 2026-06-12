@@ -1,16 +1,7 @@
 'use client';
 
 import type { ParticipantStanding } from '@/lib/types';
-
-const STAGE_LABELS: Record<string, string> = {
-  GROUP_STAGE: 'Group Stage',
-  LAST_32: 'Round of 32',
-  LAST_16: 'Round of 16',
-  QUARTER_FINALS: 'Quarter-Final',
-  SEMI_FINALS: 'Semi-Final',
-  THIRD_PLACE: '3rd Place Play-off',
-  FINAL: 'Final',
-};
+import { STAGE_LABELS } from '@/lib/stageLabels';
 
 function StatusBadge({ standing }: { standing: ParticipantStanding }) {
   if (standing.rank === 1 && !standing.tied) {

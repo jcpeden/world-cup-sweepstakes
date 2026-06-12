@@ -63,7 +63,7 @@ describe('computeStandings', () => {
 
       const standings = computeStandings(matches);
       const ron = standings.find(s => s.participant.name === 'Ron')!;
-      const john = standings.find(s => s.participant.name === 'John Peden')!; // Senegal, still active
+      const john = standings.find(s => s.participant.name === 'John')!; // Senegal, still active
 
       expect(john.rankScore).toBeGreaterThan(ron.rankScore);
     });
