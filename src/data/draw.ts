@@ -1,8 +1,8 @@
 import type { Participant } from '@/lib/types';
 
 export const draw: Participant[] = [
-  { name: 'Sara',            team: 'South Korea',            apiName: 'Korea Republic', flag: '🇰🇷', avatar: 'https://avatars.slack-edge.com/2025-03-30/8701535238336_3b4bf759ccfa50cec51e_192.jpg' },
-  { name: 'Stuart',          team: 'Bosnia and Herzegovina',                            flag: '🇧🇦', avatar: 'https://avatars.slack-edge.com/2026-01-21/10321868246167_4f2fd1a5c1a93f3ff7d2_192.jpg' },
+  { name: 'Sara',            team: 'South Korea',                                       flag: '🇰🇷', avatar: 'https://avatars.slack-edge.com/2025-03-30/8701535238336_3b4bf759ccfa50cec51e_192.jpg' },
+  { name: 'Stuart',          team: 'Bosnia and Herzegovina', apiName: 'Bosnia-Herzegovina', flag: '🇧🇦', avatar: 'https://avatars.slack-edge.com/2026-01-21/10321868246167_4f2fd1a5c1a93f3ff7d2_192.jpg' },
   { name: 'Hugo',            team: 'Mexico',                                            flag: '🇲🇽', avatar: 'https://avatars.slack-edge.com/2025-12-03/10048692234388_f83f36f33289ed670835_192.jpg' },
   { name: 'John Peden',      team: 'Senegal',                                           flag: '🇸🇳', avatar: 'https://avatars.slack-edge.com/2026-01-20/10328963602133_d06d5555b0ffbb0ce1fc_192.jpg' },
   { name: 'Patrick',         team: 'Netherlands',                                       flag: '🇳🇱', avatar: 'https://avatars.slack-edge.com/2025-08-05/9294115487959_8d587e94f50c0b8ecc20_192.png' },
@@ -24,7 +24,7 @@ export const draw: Participant[] = [
   { name: 'Amie',            team: 'Iraq',                                              flag: '🇮🇶', avatar: 'https://avatars.slack-edge.com/2021-03-01/1831972940464_fc756527a66293df4f63_192.png' },
   { name: 'Neha',            team: 'Saudi Arabia',                                      flag: '🇸🇦', avatar: 'https://avatars.slack-edge.com/2022-09-21/4118793000740_d8aae37f7c8c53c7915b_192.png' },
   { name: 'Tobi',            team: 'Austria',                                           flag: '🇦🇹', avatar: 'https://avatars.slack-edge.com/2026-01-06/10224457227639_10e4877c93c70e7539d6_192.jpg' },
-  { name: 'Nadia',           team: 'Czechia',                apiName: 'Czech Republic', flag: '🇨🇿', avatar: 'https://avatars.slack-edge.com/2024-09-04/7676551397378_43271337e04cbe525efa_192.png' },
+  { name: 'Nadia',           team: 'Czechia',                                           flag: '🇨🇿', avatar: 'https://avatars.slack-edge.com/2024-09-04/7676551397378_43271337e04cbe525efa_192.png' },
   { name: 'Lauren',          team: 'Canada',                                            flag: '🇨🇦', avatar: 'https://avatars.slack-edge.com/2026-02-11/10484317293331_4b09801d7bbe9e8c3e86_192.png' },
   { name: 'Zoe',             team: 'Türkiye',                                           flag: '🇹🇷', avatar: 'https://cdn.theorg.com/899daa80-eca2-436e-b434-cfc77f096fe2_medium.jpg' },
   { name: 'Maarten',         team: 'Uruguay',                                           flag: '🇺🇾', avatar: 'https://avatars.slack-edge.com/2023-04-26/5195156399328_126598cd825fe37c6329_192.jpg' },

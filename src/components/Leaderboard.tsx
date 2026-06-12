@@ -37,13 +37,14 @@ function StatusBadge({ standing }: { standing: ParticipantStanding }) {
   if (standing.status === 'active') {
     return (
       <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full">
-        Active · {STAGE_LABELS[standing.stage]}
+        Active
       </span>
     );
   }
+  const stageLabel = standing.stage === 'GROUP_STAGE' ? '' : ` · ${STAGE_LABELS[standing.stage]}`;
   return (
     <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
-      Out · {STAGE_LABELS[standing.stage]}
+      Out{stageLabel}
     </span>
   );
 }

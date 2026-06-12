@@ -182,7 +182,7 @@ describe('computeStandings', () => {
         makeMatch('Mexico', 'South Africa', {
           score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } },
         }),
-        makeMatch('Korea Republic', 'Czech Republic', {
+        makeMatch('South Korea', 'Czechia', {
           score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 1 } },
         }),
       ];

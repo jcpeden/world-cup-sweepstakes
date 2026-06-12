@@ -18,7 +18,7 @@ export default async function Home() {
         <h1 className="text-3xl font-bold text-gray-900">World Cup 2026</h1>
         <p className="text-gray-500 mt-1">Sweepstakes · Live Standings</p>
       </header>
-      <NextMatch match={nextMatch} />
+      <NextMatch match={nextMatch} draw={draw} />
       <Leaderboard standings={standings} />
       <p className="text-center text-xs text-gray-400 mt-6">
         Updates every 60 seconds · Powered by football-data.org
