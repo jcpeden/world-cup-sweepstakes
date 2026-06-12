@@ -67,6 +67,23 @@ describe('computeStandings', () => {
 
       expect(john.rankScore).toBeGreaterThan(ron.rankScore);
     });
+
+    it('ranks group stage participants by points — more wins = higher rank', () => {
+      const matches: Match[] = [
+        makeMatch('Argentina', 'France', { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } } }),
+        makeMatch('England', 'Germany', { score: { winner: 'DRAW', fullTime: { home: 1, away: 1 } } }),
+      ];
+
+      const standings = computeStandings(matches);
+      const nelson = standings.find(s => s.participant.name === 'Nelson')!;  // Argentina 3pts
+      const nick   = standings.find(s => s.participant.name === 'Nick')!;    // England 1pt
+      const miles  = standings.find(s => s.participant.name === 'Miles')!;   // Germany 1pt
+      const aubrie = standings.find(s => s.participant.name === 'Aubrie')!;  // Haiti 0pts
+
+      expect(nelson.rankScore).toBeGreaterThan(nick.rankScore);
+      expect(nick.rankScore).toEqual(miles.rankScore); // same points = tied
+      expect(nick.rankScore).toBeGreaterThan(aubrie.rankScore);
+    });
   });
 
   describe('knockout rounds', () => {

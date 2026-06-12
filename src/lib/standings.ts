@@ -15,7 +15,8 @@ const STAGE_RANK: Record<TournamentStage, number> = {
 function getRankScore(
   stage: TournamentStage,
   isActive: boolean,
-  finalResult: 'won' | 'lost' | 'none'
+  finalResult: 'won' | 'lost' | 'none',
+  groupPoints: number
 ): number {
   if (stage === 'FINAL') {
     if (finalResult === 'won') return 1000;
@@ -26,6 +27,9 @@ function getRankScore(
     if (finalResult === 'won') return 800;
     if (finalResult === 'lost') return 700;
     return STAGE_RANK.THIRD_PLACE + 5;
+  }
+  if (stage === 'GROUP_STAGE') {
+    return STAGE_RANK.GROUP_STAGE + groupPoints;
   }
   return isActive ? STAGE_RANK[stage] + 5 : STAGE_RANK[stage];
 }
@@ -46,6 +50,23 @@ function getKnockoutResult(
     return match.score.winner === 'HOME_TEAM' ? 'won' : 'lost';
   }
   return match.score.winner === 'AWAY_TEAM' ? 'won' : 'lost';
+}
+
+function getGroupStagePoints(matches: Match[], teamName: string): number {
+  return matches
+    .filter(
+      m =>
+        m.stage === 'GROUP_STAGE' &&
+        m.status === 'FINISHED' &&
+        (m.homeTeam.name === teamName || m.awayTeam.name === teamName)
+    )
+    .reduce((pts, m) => {
+      if (m.score.winner === 'DRAW') return pts + 1;
+      if (m.score.winner === null) return pts;
+      const isHome = m.homeTeam.name === teamName;
+      const won = isHome ? m.score.winner === 'HOME_TEAM' : m.score.winner === 'AWAY_TEAM';
+      return pts + (won ? 3 : 0);
+    }, 0);
 }
 
 function getTeamCurrentStage(
@@ -99,7 +120,8 @@ export function computeStandings(matches: Match[]): ParticipantStanding[] {
   const standings: ParticipantStanding[] = draw.map(participant => {
     const teamName = participant.apiName ?? participant.team;
     const { stage, isActive, finalResult } = getTeamCurrentStage(matches, teamName);
-    const rankScore = getRankScore(stage, isActive, finalResult);
+    const groupPoints = getGroupStagePoints(matches, teamName);
+    const rankScore = getRankScore(stage, isActive, finalResult, groupPoints);
 
     const status: ParticipantStatus = isActive ? 'active' : 'eliminated';
 
