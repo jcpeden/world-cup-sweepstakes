@@ -90,7 +90,7 @@ function getTeamCurrentStage(
 
   return {
     stage: 'GROUP_STAGE',
-    isActive: finishedGroupMatches.length < 2,
+    isActive: finishedGroupMatches.length < 3,
     finalResult: 'none',
   };
 }
