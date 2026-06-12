@@ -16,7 +16,8 @@ function getRankScore(
   stage: TournamentStage,
   isActive: boolean,
   finalResult: 'won' | 'lost' | 'none',
-  groupPoints: number
+  groupPoints: number,
+  gamesPlayed: number
 ): number {
   if (stage === 'FINAL') {
     if (finalResult === 'won') return 1000;
@@ -29,7 +30,9 @@ function getRankScore(
     return STAGE_RANK.THIRD_PLACE + 5;
   }
   if (stage === 'GROUP_STAGE') {
-    return STAGE_RANK.GROUP_STAGE + groupPoints;
+    // Secondary tiebreaker: fewer games played = more games remaining = higher potential
+    // Encodes as fractional component: 0 games → +0.3, 1 game → +0.2, 2 games → +0.1, 3 games → +0.0
+    return STAGE_RANK.GROUP_STAGE + groupPoints + (3 - gamesPlayed) / 10;
   }
   return isActive ? STAGE_RANK[stage] + 5 : STAGE_RANK[stage];
 }
@@ -50,6 +53,15 @@ function getKnockoutResult(
     return match.score.winner === 'HOME_TEAM' ? 'won' : 'lost';
   }
   return match.score.winner === 'AWAY_TEAM' ? 'won' : 'lost';
+}
+
+function getGroupStageGamesPlayed(matches: Match[], teamName: string): number {
+  return matches.filter(
+    m =>
+      m.stage === 'GROUP_STAGE' &&
+      m.status === 'FINISHED' &&
+      (m.homeTeam.name === teamName || m.awayTeam.name === teamName)
+  ).length;
 }
 
 function getGroupStagePoints(matches: Match[], teamName: string): number {
@@ -121,7 +133,8 @@ export function computeStandings(matches: Match[]): ParticipantStanding[] {
     const teamName = participant.apiName ?? participant.team;
     const { stage, isActive, finalResult } = getTeamCurrentStage(matches, teamName);
     const groupPoints = getGroupStagePoints(matches, teamName);
-    const rankScore = getRankScore(stage, isActive, finalResult, groupPoints);
+    const gamesPlayed = getGroupStageGamesPlayed(matches, teamName);
+    const rankScore = getRankScore(stage, isActive, finalResult, groupPoints, gamesPlayed);
 
     const status: ParticipantStatus = isActive ? 'active' : 'eliminated';
 

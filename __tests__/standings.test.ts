@@ -160,6 +160,43 @@ describe('computeStandings', () => {
     });
   });
 
+  describe('games played tiebreaker in group stage', () => {
+    it('ranks an unplayed team above a 0-pt team that has lost', () => {
+      const matches: Match[] = [
+        makeMatch('Mexico', 'South Africa', {
+          score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } },
+        }),
+      ];
+
+      const standings = computeStandings(matches);
+      const hugo = standings.find(s => s.participant.name === 'Hugo')!;    // Mexico: 3pts, 1 game
+      const steven = standings.find(s => s.participant.name === 'Steven')!; // South Africa: 0pts, 1 game
+      const unplayed = standings.find(s => s.participant.name === 'Joe')!;  // Iran: 0pts, 0 games
+
+      expect(hugo.rank).toBeLessThan(unplayed.rank);   // Mexico (3pts) above all 0-pt teams
+      expect(unplayed.rank).toBeLessThan(steven.rank); // Unplayed above SA (0pts, 1 game played)
+    });
+
+    it('keeps two 0-pt teams tied when both have played the same number of games', () => {
+      const matches: Match[] = [
+        makeMatch('Mexico', 'South Africa', {
+          score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } },
+        }),
+        makeMatch('Korea Republic', 'Czech Republic', {
+          score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 1 } },
+        }),
+      ];
+
+      const standings = computeStandings(matches);
+      const steven = standings.find(s => s.participant.name === 'Steven')!; // South Africa: 0pts, 1 game
+      const nadia = standings.find(s => s.participant.name === 'Nadia')!;   // Czechia: 0pts, 1 game
+
+      expect(steven.rank).toBe(nadia.rank);
+      expect(steven.tied).toBe(true);
+      expect(nadia.tied).toBe(true);
+    });
+  });
+
   describe('tie handling', () => {
     it('gives tied participants the same rank number', () => {
       const standings = computeStandings([]); // all tied
