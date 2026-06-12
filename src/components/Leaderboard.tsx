@@ -70,7 +70,7 @@ function StandingRow({ standing }: { standing: ParticipantStanding }) {
       />
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-gray-900 text-sm">{standing.participant.name}</div>
-        <div className="text-gray-400 text-xs">{standing.participant.team}</div>
+        <div className="text-gray-400 text-xs">{standing.participant.flag} {standing.participant.team}</div>
       </div>
       <StatusBadge standing={standing} />
     </div>

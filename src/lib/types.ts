@@ -43,6 +43,7 @@ export interface Participant {
   name: string;
   team: string;      // display name shown in UI
   apiName?: string;  // football-data.org team name if it differs from display name
+  flag: string;
   avatar: string;
 }
 
