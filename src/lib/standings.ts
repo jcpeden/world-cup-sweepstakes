@@ -41,7 +41,7 @@ function getKnockoutResult(
       m.status === 'FINISHED' &&
       (m.homeTeam.name === teamName || m.awayTeam.name === teamName)
   );
-  if (!match || match.score.winner === null) return 'none';
+  if (!match || match.score.winner === null || match.score.winner === 'DRAW') return 'none';
   if (match.homeTeam.name === teamName) {
     return match.score.winner === 'HOME_TEAM' ? 'won' : 'lost';
   }
@@ -90,7 +90,7 @@ function getTeamCurrentStage(
 
   return {
     stage: 'GROUP_STAGE',
-    isActive: finishedGroupMatches.length < 3,
+    isActive: finishedGroupMatches.length < 2,
     finalResult: 'none',
   };
 }

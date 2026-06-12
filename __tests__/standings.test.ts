@@ -39,12 +39,11 @@ describe('computeStandings', () => {
   });
 
   describe('group stage elimination', () => {
-    it('marks a team as eliminated after 3 finished group games with no knockout match', () => {
-      // Qatar (Ron) — 3 group games all finished, never appears in LAST_32
+    it('marks a team as eliminated after 2 finished group games with no knockout match', () => {
+      // Qatar (Ron) — 2 group games all finished, never appears in LAST_32
       const matches: Match[] = [
         makeMatch('Qatar', 'Ecuador', { score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 2 } } }),
         makeMatch('Qatar', 'Senegal', { score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 1 } } }),
-        makeMatch('Qatar', 'Canada', { score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 1 } } }),
       ];
 
       const standings = computeStandings(matches);
@@ -58,7 +57,6 @@ describe('computeStandings', () => {
       const matches: Match[] = [
         makeMatch('Qatar', 'Ecuador', { score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 2 } } }),
         makeMatch('Qatar', 'Senegal', { score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 1 } } }),
-        makeMatch('Qatar', 'Canada', { score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 1 } } }),
       ];
 
       const standings = computeStandings(matches);
