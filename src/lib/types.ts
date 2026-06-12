@@ -46,12 +46,7 @@ export interface Participant {
   avatar: string;
 }
 
-export type ParticipantStatus =
-  | 'winner'
-  | 'runner-up'
-  | 'third'
-  | 'active'
-  | 'eliminated';
+export type ParticipantStatus = 'active' | 'eliminated';
 
 export interface ParticipantStanding {
   rank: number;

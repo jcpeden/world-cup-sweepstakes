@@ -13,24 +13,24 @@ const STAGE_LABELS: Record<string, string> = {
 };
 
 function StatusBadge({ standing }: { standing: ParticipantStanding }) {
-  if (standing.status === 'winner') {
+  if (standing.rank === 1 && !standing.tied) {
     return (
       <span className="bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-0.5 rounded-full">
-        🏆 Champion
+        🥇 1st
       </span>
     );
   }
-  if (standing.status === 'runner-up') {
+  if (standing.rank === 2 && !standing.tied) {
     return (
       <span className="bg-gray-300 text-gray-800 text-xs font-bold px-2 py-0.5 rounded-full">
-        🥈 Runner-up
+        🥈 2nd
       </span>
     );
   }
-  if (standing.status === 'third') {
+  if (standing.rank === 3 && !standing.tied) {
     return (
       <span className="bg-amber-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-        🥉 3rd Place
+        🥉 3rd
       </span>
     );
   }

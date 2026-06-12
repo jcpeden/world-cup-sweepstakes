@@ -102,7 +102,7 @@ describe('computeStandings', () => {
   });
 
   describe('final results', () => {
-    it('marks the FINAL winner as champion ranked 1st', () => {
+    it('ranks FINAL winner 1st and runner-up 2nd, both eliminated', () => {
       const matches: Match[] = [
         makeMatch('Argentina', 'England', {
           stage: 'FINAL',
@@ -116,12 +116,12 @@ describe('computeStandings', () => {
       const nick = standings.find(s => s.participant.name === 'Nick')!;     // England
 
       expect(nelson.rank).toBe(1);
-      expect(nelson.status).toBe('winner');
+      expect(nelson.status).toBe('eliminated'); // tournament is over, team is no longer active
       expect(nick.rank).toBe(2);
-      expect(nick.status).toBe('runner-up');
+      expect(nick.status).toBe('eliminated');
     });
 
-    it('marks the THIRD_PLACE winner as 3rd', () => {
+    it('ranks THIRD_PLACE winner 3rd, eliminated', () => {
       const matches: Match[] = [
         makeMatch('Argentina', 'England', {
           stage: 'FINAL',
@@ -139,7 +139,7 @@ describe('computeStandings', () => {
       const miles = standings.find(s => s.participant.name === 'Miles')!; // Germany
 
       expect(miles.rank).toBe(3);
-      expect(miles.status).toBe('third');
+      expect(miles.status).toBe('eliminated');
     });
   });
 

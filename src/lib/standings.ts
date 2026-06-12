@@ -101,12 +101,7 @@ export function computeStandings(matches: Match[]): ParticipantStanding[] {
     const { stage, isActive, finalResult } = getTeamCurrentStage(matches, teamName);
     const rankScore = getRankScore(stage, isActive, finalResult);
 
-    let status: ParticipantStatus;
-    if (stage === 'FINAL' && finalResult === 'won') status = 'winner';
-    else if (stage === 'FINAL' && finalResult === 'lost') status = 'runner-up';
-    else if (stage === 'THIRD_PLACE' && finalResult === 'won') status = 'third';
-    else if (isActive) status = 'active';
-    else status = 'eliminated';
+    const status: ParticipantStatus = isActive ? 'active' : 'eliminated';
 
     return { rank: 0, tied: false, participant, stage, status, rankScore };
   });
