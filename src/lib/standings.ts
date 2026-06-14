@@ -55,32 +55,6 @@ function getKnockoutResult(
   return match.score.winner === 'AWAY_TEAM' ? 'won' : 'lost';
 }
 
-function getGroupStageGamesPlayed(matches: Match[], teamName: string): number {
-  return matches.filter(
-    m =>
-      m.stage === 'GROUP_STAGE' &&
-      m.status === 'FINISHED' &&
-      (m.homeTeam.name === teamName || m.awayTeam.name === teamName)
-  ).length;
-}
-
-function getGroupStagePoints(matches: Match[], teamName: string): number {
-  return matches
-    .filter(
-      m =>
-        m.stage === 'GROUP_STAGE' &&
-        m.status === 'FINISHED' &&
-        (m.homeTeam.name === teamName || m.awayTeam.name === teamName)
-    )
-    .reduce((pts, m) => {
-      if (m.score.winner === 'DRAW') return pts + 1;
-      if (m.score.winner === null) return pts;
-      const isHome = m.homeTeam.name === teamName;
-      const won = isHome ? m.score.winner === 'HOME_TEAM' : m.score.winner === 'AWAY_TEAM';
-      return pts + (won ? 3 : 0);
-    }, 0);
-}
-
 function getTeamCurrentStage(
   matches: Match[],
   teamName: string
@@ -182,11 +156,11 @@ export function computeStandings(matches: Match[]): ParticipantStanding[] {
   const standings: ParticipantStanding[] = draw.map(participant => {
     const teamName = participant.apiName ?? participant.team;
     const { stage, isActive, finalResult } = getTeamCurrentStage(matches, teamName);
-    const groupPoints = getGroupStagePoints(matches, teamName);
-    const gamesPlayed = getGroupStageGamesPlayed(matches, teamName);
+    const groupStats = getGroupStats(matches, teamName);
+    const groupPoints = groupStats.points;
+    const gamesPlayed = groupStats.won + groupStats.drawn + groupStats.lost;
     const rankScore = getRankScore(stage, isActive, finalResult, groupPoints, gamesPlayed);
 
-    const groupStats = getGroupStats(matches, teamName);
     const eliminatedDate = getEliminationDate(matches, teamName, stage, isActive);
     const status: ParticipantStatus = isActive ? 'active' : 'eliminated';
 
