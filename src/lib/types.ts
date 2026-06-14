@@ -47,6 +47,13 @@ export interface Participant {
   avatar: string;
 }
 
+export interface GroupStats {
+  won: number;
+  drawn: number;
+  lost: number;
+  points: number;
+}
+
 export type ParticipantStatus = 'active' | 'eliminated';
 
 export interface ParticipantStanding {
@@ -56,4 +63,6 @@ export interface ParticipantStanding {
   stage: TournamentStage;
   status: ParticipantStatus;
   rankScore: number;
+  groupStats: GroupStats;
+  eliminatedDate?: string;
 }

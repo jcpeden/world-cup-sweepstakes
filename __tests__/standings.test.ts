@@ -296,4 +296,57 @@ describe('computeStandings', () => {
       expect(standings.every(s => s.tied)).toBe(true);
     });
   });
+
+  describe('groupStats', () => {
+    it('starts at all-zero before any matches are played', () => {
+      const standings = computeStandings([]);
+      const nelson = standings.find(s => s.participant.name === 'Nelson')!;
+      expect(nelson.groupStats).toEqual({ won: 0, drawn: 0, lost: 0, points: 0 });
+    });
+
+    it('accumulates W/D/L and points from finished group matches', () => {
+      const matches: Match[] = [
+        makeMatch('Argentina', 'France', { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } } }),
+        makeMatch('Argentina', 'Brazil', { score: { winner: 'DRAW',      fullTime: { home: 1, away: 1 } } }),
+        makeMatch('Spain',  'Argentina', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+      ];
+      const standings = computeStandings(matches);
+      const nelson = standings.find(s => s.participant.name === 'Nelson')!; // Argentina
+      expect(nelson.groupStats).toEqual({ won: 1, drawn: 1, lost: 1, points: 4 });
+    });
+  });
+
+  describe('eliminatedDate', () => {
+    it('is undefined for all active participants', () => {
+      const standings = computeStandings([]);
+      expect(standings.every(s => s.eliminatedDate === undefined)).toBe(true);
+    });
+
+    it('is the date of the 3rd group game for a group-eliminated team', () => {
+      const matches: Match[] = [
+        makeMatch('Qatar', 'Ecuador', { score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 2 } }, utcDate: '2026-06-11T16:00:00Z' }),
+        makeMatch('Qatar', 'Senegal', { score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 1 } }, utcDate: '2026-06-15T13:00:00Z' }),
+        makeMatch('Qatar', 'Canada',  { score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 1 } }, utcDate: '2026-06-18T20:00:00Z' }),
+      ];
+      const standings = computeStandings(matches);
+      const ron = standings.find(s => s.participant.name === 'Ron')!; // Qatar
+      expect(ron.status).toBe('eliminated');
+      expect(ron.eliminatedDate).toBe('2026-06-18T20:00:00Z');
+    });
+
+    it('is the date of the knockout loss for a knockout-eliminated team', () => {
+      const matches: Match[] = [
+        makeMatch('Argentina', 'Saudi Arabia', {
+          stage: 'LAST_32',
+          status: 'FINISHED',
+          score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 1 } },
+          utcDate: '2026-06-24T20:00:00Z',
+        }),
+      ];
+      const standings = computeStandings(matches);
+      const nelson = standings.find(s => s.participant.name === 'Nelson')!; // Argentina
+      expect(nelson.status).toBe('eliminated');
+      expect(nelson.eliminatedDate).toBe('2026-06-24T20:00:00Z');
+    });
+  });
 });

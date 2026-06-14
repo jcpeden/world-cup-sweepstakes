@@ -1,5 +1,5 @@
 import { draw } from '@/data/draw';
-import type { Match, ParticipantStanding, ParticipantStatus, TournamentStage } from './types';
+import type { Match, ParticipantStanding, ParticipantStatus, TournamentStage, GroupStats } from './types';
 
 // Higher number = better rank
 const STAGE_RANK: Record<TournamentStage, number> = {
@@ -128,6 +128,56 @@ function getTeamCurrentStage(
   };
 }
 
+function getGroupStats(matches: Match[], teamName: string): GroupStats {
+  const groupMatches = matches.filter(
+    m =>
+      m.stage === 'GROUP_STAGE' &&
+      m.status === 'FINISHED' &&
+      (m.homeTeam.name === teamName || m.awayTeam.name === teamName)
+  );
+
+  return groupMatches.reduce<GroupStats>(
+    (stats, m) => {
+      if (m.score.winner === 'DRAW') return { ...stats, drawn: stats.drawn + 1, points: stats.points + 1 };
+      if (m.score.winner === null) return stats;
+      const isHome = m.homeTeam.name === teamName;
+      const won = isHome ? m.score.winner === 'HOME_TEAM' : m.score.winner === 'AWAY_TEAM';
+      return won
+        ? { ...stats, won: stats.won + 1, points: stats.points + 3 }
+        : { ...stats, lost: stats.lost + 1 };
+    },
+    { won: 0, drawn: 0, lost: 0, points: 0 }
+  );
+}
+
+function getEliminationDate(
+  matches: Match[],
+  teamName: string,
+  stage: TournamentStage,
+  isActive: boolean
+): string | undefined {
+  if (isActive) return undefined;
+
+  if (stage === 'GROUP_STAGE') {
+    const finished = matches
+      .filter(
+        m =>
+          m.stage === 'GROUP_STAGE' &&
+          m.status === 'FINISHED' &&
+          (m.homeTeam.name === teamName || m.awayTeam.name === teamName)
+      )
+      .sort((a, b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime());
+    return finished[0]?.utcDate;
+  }
+
+  return matches.find(
+    m =>
+      m.stage === stage &&
+      m.status === 'FINISHED' &&
+      (m.homeTeam.name === teamName || m.awayTeam.name === teamName)
+  )?.utcDate;
+}
+
 export function computeStandings(matches: Match[]): ParticipantStanding[] {
   const standings: ParticipantStanding[] = draw.map(participant => {
     const teamName = participant.apiName ?? participant.team;
@@ -136,9 +186,11 @@ export function computeStandings(matches: Match[]): ParticipantStanding[] {
     const gamesPlayed = getGroupStageGamesPlayed(matches, teamName);
     const rankScore = getRankScore(stage, isActive, finalResult, groupPoints, gamesPlayed);
 
+    const groupStats = getGroupStats(matches, teamName);
+    const eliminatedDate = getEliminationDate(matches, teamName, stage, isActive);
     const status: ParticipantStatus = isActive ? 'active' : 'eliminated';
 
-    return { rank: 0, tied: false, participant, stage, status, rankScore };
+    return { rank: 0, tied: false, participant, stage, status, rankScore, groupStats, eliminatedDate };
   });
 
   standings.sort((a, b) => {
