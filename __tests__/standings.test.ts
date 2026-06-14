@@ -169,12 +169,12 @@ describe('computeStandings', () => {
       ];
 
       const standings = computeStandings(matches);
-      const hugo = standings.find(s => s.participant.name === 'Hugo')!;    // Mexico: 3pts, 1 game
+      const hugo = standings.find(s => s.participant.name === 'Hugo')!;     // Mexico: 3pts, 1 game
       const steven = standings.find(s => s.participant.name === 'Steven')!; // South Africa: 0pts, 1 game
       const unplayed = standings.find(s => s.participant.name === 'Joe')!;  // Iran: 0pts, 0 games
 
       expect(hugo.rank).toBeLessThan(unplayed.rank);   // Mexico (3pts) above all 0-pt teams
-      expect(unplayed.rank).toBeLessThan(steven.rank); // Unplayed above SA (0pts, 1 game played)
+      expect(unplayed.rank).toBeLessThan(steven.rank); // Unplayed above SA (0pts, 1 loss — less potential)
     });
 
     it('keeps two 0-pt teams tied when both have played the same number of games', () => {
@@ -194,6 +194,94 @@ describe('computeStandings', () => {
       expect(steven.rank).toBe(nadia.rank);
       expect(steven.tied).toBe(true);
       expect(nadia.tied).toBe(true);
+    });
+  });
+
+  describe('participant ordering: four criteria applied in sequence', () => {
+    // Participants used below (name → team):
+    //   Nelson → Argentina
+    //   Hugo   → Mexico
+    //   Joe    → Iran
+    //   Nick   → England
+    //   Sara   → South Korea
+    // Opponents are non-draw teams (France, Brazil, Spain, Portugal) so they
+    // don't affect any other participant's standing.
+
+    describe('criterion 1: most points', () => {
+      it('ranks 2 wins (6pts) above 2 draws (2pts) when same games played', () => {
+        const matches: Match[] = [
+          // Nelson (Argentina): 2 wins = 6 pts, 2 games
+          makeMatch('Argentina', 'France', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+          makeMatch('Argentina', 'Brazil', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+          // Hugo (Mexico): 2 draws = 2 pts, 2 games
+          makeMatch('Mexico', 'France', { score: { winner: 'DRAW', fullTime: { home: 1, away: 1 } } }),
+          makeMatch('Mexico', 'Brazil', { score: { winner: 'DRAW', fullTime: { home: 1, away: 1 } } }),
+        ];
+
+        const standings = computeStandings(matches);
+        const nelson = standings.find(s => s.participant.name === 'Nelson')!; // 6 pts
+        const hugo   = standings.find(s => s.participant.name === 'Hugo')!;   // 2 pts
+
+        expect(nelson.rank).toBeLessThan(hugo.rank);
+      });
+    });
+
+    describe('criterion 2: most games played (tiebreaker when points equal)', () => {
+      it('ranks 2 wins (6pts) above 1 win (3pts)', () => {
+        const matches: Match[] = [
+          // Nelson (Argentina): 2 wins = 6 pts, 2 games
+          makeMatch('Argentina', 'France', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+          makeMatch('Argentina', 'Brazil', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+          // Hugo (Mexico): 1 win = 3 pts, 1 game
+          makeMatch('Mexico', 'France', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+        ];
+
+        const standings = computeStandings(matches);
+        const nelson = standings.find(s => s.participant.name === 'Nelson')!; // 6 pts, 2 games
+        const hugo   = standings.find(s => s.participant.name === 'Hugo')!;   // 3 pts, 1 game
+
+        expect(nelson.rank).toBeLessThan(hugo.rank);
+      });
+
+      it('with equal points, ranks fewer games played higher (more games remaining = more potential)', () => {
+        const matches: Match[] = [
+          // Hugo (Mexico): 1 win + 1 loss = 3 pts, 2 games played (1 game remaining)
+          makeMatch('Mexico', 'France', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+          makeMatch('Brazil', 'Mexico', { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } } }),
+          // Joe (Iran): 1 win = 3 pts, 1 game played (2 games remaining)
+          makeMatch('Iran', 'France', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+        ];
+
+        const standings = computeStandings(matches);
+        const hugo = standings.find(s => s.participant.name === 'Hugo')!; // 3 pts, 2 games played
+        const joe  = standings.find(s => s.participant.name === 'Joe')!;  // 3 pts, 1 game played
+
+        expect(joe.rank).toBeLessThan(hugo.rank); // same pts, fewer games played → ranks higher
+      });
+    });
+
+    describe('criterion 3: participant name alphabetically (tiebreaker when points and games equal)', () => {
+      it('with equal points and games, lists alphabetically earlier name first', () => {
+        const matches: Match[] = [
+          // Hugo (Mexico): 2 wins → 6 pts, 2 games
+          makeMatch('Mexico',      'France',   { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+          makeMatch('Mexico',      'Brazil',   { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+          // Sara (South Korea): 2 wins → 6 pts, 2 games
+          makeMatch('South Korea', 'Spain',    { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+          makeMatch('South Korea', 'Portugal', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+        ];
+
+        const standings = computeStandings(matches);
+        const hugo = standings.find(s => s.participant.name === 'Hugo')!;
+        const sara = standings.find(s => s.participant.name === 'Sara')!;
+
+        // Equal points and games → same rank, both tied
+        expect(hugo.rank).toBe(sara.rank);
+        expect(hugo.tied).toBe(true);
+        expect(sara.tied).toBe(true);
+        // 'Hugo' < 'Sara' alphabetically → Hugo appears first in the list
+        expect(standings.indexOf(hugo)).toBeLessThan(standings.indexOf(sara));
+      });
     });
   });
 

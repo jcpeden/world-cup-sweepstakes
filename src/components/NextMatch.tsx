@@ -47,7 +47,7 @@ export function NextMatch({ match, draw }: NextMatchProps) {
   return (
     <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-4 mb-6">
       <div className="text-xs font-semibold uppercase tracking-wider mb-2 opacity-80">
-        {isLive ? '🔴 Live Now' : 'Next Sweepstake Match'}
+        {isLive ? <span className="animate-pulse">🔴 Live Now</span> : 'Next Sweepstake Match'}
       </div>
       <div className="flex items-center justify-center gap-4 text-lg font-bold">
         <TeamSlot name={match.homeTeam.shortName} participant={homeParticipant} align="left" />

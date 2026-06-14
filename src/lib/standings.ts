@@ -30,7 +30,7 @@ function getRankScore(
     return STAGE_RANK.THIRD_PLACE + 5;
   }
   if (stage === 'GROUP_STAGE') {
-    // Secondary tiebreaker: fewer games played = more games remaining = higher potential
+    // Tiebreakers in order: 1) points, 2) games remaining (fewer played = more potential)
     // Encodes as fractional component: 0 games → +0.3, 1 game → +0.2, 2 games → +0.1, 3 games → +0.0
     return STAGE_RANK.GROUP_STAGE + groupPoints + (3 - gamesPlayed) / 10;
   }
@@ -141,7 +141,11 @@ export function computeStandings(matches: Match[]): ParticipantStanding[] {
     return { rank: 0, tied: false, participant, stage, status, rankScore };
   });
 
-  standings.sort((a, b) => b.rankScore - a.rankScore);
+  standings.sort((a, b) => {
+    const scoreDiff = b.rankScore - a.rankScore;
+    if (scoreDiff !== 0) return scoreDiff;
+    return a.participant.name.localeCompare(b.participant.name);
+  });
 
   for (let i = 0; i < standings.length; i++) {
     standings[i].rank =
