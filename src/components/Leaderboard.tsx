@@ -63,6 +63,11 @@ function StandingRow({ standing }: { standing: ParticipantStanding }) {
       <div className="flex-1 min-w-0">
         <div className="font-semibold text-gray-900 text-sm">{standing.participant.name}</div>
         <div className="text-gray-400 text-xs">{standing.participant.flag} {standing.participant.team}</div>
+        {standing.stage === 'GROUP_STAGE' && (
+          <div className="text-gray-400 text-xs">
+            {standing.groupStats.won}W {standing.groupStats.drawn}D {standing.groupStats.lost}L · {standing.groupStats.points}pts
+          </div>
+        )}
       </div>
       <StatusBadge standing={standing} />
     </div>
