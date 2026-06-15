@@ -8,6 +8,8 @@ import {
   findDerbies,
   findNotableResults,
   findNextFixture,
+  formatSlackMessage,
+  formatNextUpdateBlock,
 } from '../scripts/sweepstake-update';
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
@@ -242,5 +244,117 @@ describe('findNextFixture', () => {
     const sooner = makeMatch('Japan', 'Brazil', { status: 'TIMED', utcDate: '2026-06-20T12:00:00Z' });
     const result = findNextFixture([later, sooner], map);
     expect(result!.match.utcDate).toBe('2026-06-20T12:00:00Z');
+  });
+});
+
+// ─── formatSlackMessage ───────────────────────────────────────────────────────
+
+describe('formatSlackMessage', () => {
+  it('produces a "no changes" message when all arrays are empty', () => {
+    const msg = formatSlackMessage([], [], [], 29);
+    expect(msg).toContain('No changes since last update');
+    expect(msg).toContain('29/29 still alive');
+  });
+
+  it('always includes the still-alive count and app URL', () => {
+    const msg = formatSlackMessage([], [], [], 27);
+    expect(msg).toContain('Still alive: 27/29');
+    expect(msg).toContain('https://world-cup-sweepstakes-rose.vercel.app/');
+  });
+
+  it('includes an elimination line per eliminated participant', () => {
+    const p = makeParticipant({ name: 'Stuart', team: 'Bosnia and Herzegovina', flag: '🇧🇦' });
+    const s = makeStanding(p, {
+      status: 'eliminated',
+      eliminatedDate: '2026-06-14T12:00:00Z',
+      groupStats: { won: 0, drawn: 1, lost: 2, points: 1 },
+    });
+    const msg = formatSlackMessage([s], [], [], 28);
+    expect(msg).toContain("Stuart's");
+    expect(msg).toContain('Bosnia and Herzegovina');
+    expect(msg).toContain('🇧🇦');
+  });
+
+  it('includes a derby line with ⚔️', () => {
+    const p1 = makeParticipant({ name: 'Patrick', team: 'Netherlands' });
+    const p2 = makeParticipant({ name: 'Jill', team: 'Japan' });
+    const m = makeMatch('Netherlands', 'Japan', {
+      score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 1 } },
+    });
+    const derby = { match: m, homeParticipant: p1, awayParticipant: p2 };
+    const msg = formatSlackMessage([], [derby], [], 29);
+    expect(msg).toContain('⚔️');
+    expect(msg).toContain('Patrick');
+    expect(msg).toContain('Jill');
+    expect(msg).toContain('2–1');
+    expect(msg).toContain('Patrick takes the bragging rights');
+  });
+
+  it('includes a notable result line with participant name and score', () => {
+    const p = makeParticipant({ name: 'Nelson', team: 'Argentina', flag: '🇦🇷' });
+    const m = makeMatch('Argentina', 'Iran', {
+      score: { winner: 'HOME_TEAM', fullTime: { home: 3, away: 0 } },
+    });
+    const notable = { match: m, participant: p, side: 'home' as const };
+    const msg = formatSlackMessage([], [], [notable], 29);
+    expect(msg).toContain('Nelson');
+    expect(msg).toContain('Argentina');
+    expect(msg).toContain('3–0');
+  });
+
+  it('shows draw result as honours even in derby', () => {
+    const p1 = makeParticipant({ name: 'Patrick', team: 'Netherlands' });
+    const p2 = makeParticipant({ name: 'Jill', team: 'Japan' });
+    const m = makeMatch('Netherlands', 'Japan', {
+      score: { winner: 'DRAW', fullTime: { home: 1, away: 1 } },
+    });
+    const derby = { match: m, homeParticipant: p1, awayParticipant: p2 };
+    const msg = formatSlackMessage([], [derby], [], 29);
+    expect(msg).toContain('honours even');
+  });
+});
+
+// ─── formatNextUpdateBlock ────────────────────────────────────────────────────
+
+describe('formatNextUpdateBlock', () => {
+  it('returns "no upcoming fixtures" message when fixture is null', () => {
+    const block = formatNextUpdateBlock(null);
+    expect(block).toContain('⏰ NEXT UPDATE');
+    expect(block).toContain('No upcoming sweepstake fixtures found');
+  });
+
+  it('shows fixture teams and kick-off time', () => {
+    const p = makeParticipant({ name: 'Patrick', team: 'Netherlands', flag: '🇳🇱' });
+    const m = makeMatch('Netherlands', 'France', {
+      status: 'SCHEDULED',
+      utcDate: '2026-06-20T15:00:00Z',
+    });
+    const fixture = { match: m, isDerby: false, participants: [p] };
+    const block = formatNextUpdateBlock(fixture);
+    expect(block).toContain('Netherlands vs France');
+    expect(block).toContain('2026-06-20 15:00:00 UTC');
+  });
+
+  it('shows DERBY flag when both teams are sweepstake teams', () => {
+    const p1 = makeParticipant({ name: 'Patrick', team: 'Netherlands' });
+    const p2 = makeParticipant({ name: 'Jill', team: 'Japan' });
+    const m = makeMatch('Netherlands', 'Japan', { status: 'SCHEDULED', utcDate: '2026-06-20T15:00:00Z' });
+    const fixture = { match: m, isDerby: true, participants: [p1, p2] };
+    const block = formatNextUpdateBlock(fixture);
+    expect(block).toContain('⚔️ DERBY');
+    expect(block).toContain('Patrick');
+    expect(block).toContain('Jill');
+  });
+
+  it('shows suggested run time as kick-off + 105 minutes', () => {
+    const p = makeParticipant({ name: 'Patrick', team: 'Netherlands' });
+    const m = makeMatch('Netherlands', 'France', {
+      status: 'SCHEDULED',
+      utcDate: '2026-06-20T15:00:00Z',
+    });
+    // kick-off 15:00 + 105 min = 16:45
+    const fixture = { match: m, isDerby: false, participants: [p] };
+    const block = formatNextUpdateBlock(fixture);
+    expect(block).toContain('16:45:00 UTC');
   });
 });
