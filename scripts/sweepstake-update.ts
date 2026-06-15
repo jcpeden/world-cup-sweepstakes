@@ -92,6 +92,7 @@ export function findNotableResults(
       if (m.score.winner === 'AWAY_TEAM' && away) {
         return [{ match: m, participant: away, side: 'away' as const }];
       }
+      // winner is exhaustively 'HOME_TEAM' | 'AWAY_TEAM' after the filter above
       return [];
     });
 }
