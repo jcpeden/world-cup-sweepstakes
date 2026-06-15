@@ -43,16 +43,33 @@ export function NextMatch({ match, draw }: NextMatchProps) {
 
   const homeParticipant = draw.find(p => (p.apiName ?? p.team) === match.homeTeam.name);
   const awayParticipant = draw.find(p => (p.apiName ?? p.team) === match.awayTeam.name);
+  const isDerby = homeParticipant !== undefined && awayParticipant !== undefined;
 
   return (
     <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-4 mb-6">
       <div className="text-xs font-semibold uppercase tracking-wider mb-2 opacity-80">
-        {isLive ? <span className="animate-pulse">🔴 Live Now</span> : 'Next Sweepstake Match'}
+        {isLive
+          ? <span className="animate-pulse">🔴 Live Now</span>
+          : isDerby
+            ? '⚔️ Sweepstake Derby'
+            : 'Next Sweepstake Match'}
       </div>
       <div className="flex items-center justify-center gap-4 text-lg font-bold">
-        <TeamSlot name={match.homeTeam.shortName} participant={homeParticipant} align="left" />
+        <TeamSlot
+          name={isDerby
+            ? `${homeParticipant!.name} ${homeParticipant!.flag} ${match.homeTeam.shortName}`
+            : match.homeTeam.shortName}
+          participant={homeParticipant}
+          align="left"
+        />
         <span className="opacity-50 text-base font-normal">vs</span>
-        <TeamSlot name={match.awayTeam.shortName} participant={awayParticipant} align="right" />
+        <TeamSlot
+          name={isDerby
+            ? `${awayParticipant!.name} ${awayParticipant!.flag} ${match.awayTeam.shortName}`
+            : match.awayTeam.shortName}
+          participant={awayParticipant}
+          align="right"
+        />
       </div>
       <div className="text-center text-sm mt-1 opacity-80">
         {STAGE_LABELS[match.stage] ?? match.stage} · {formatKickoff(match.utcDate)}
