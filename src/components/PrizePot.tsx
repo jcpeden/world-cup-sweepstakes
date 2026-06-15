@@ -1,6 +1,6 @@
 export function PrizePot() {
   return (
-    <div className="text-center text-sm text-gray-600 mb-6">
+    <div className="text-center text-sm text-slate-300 mb-6">
       🥇 <span className="font-semibold">$174</span>
       &nbsp;&nbsp;🥈 <span className="font-semibold">$72</span>
       &nbsp;&nbsp;🥉 <span className="font-semibold">$44</span>

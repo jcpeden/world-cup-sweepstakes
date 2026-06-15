@@ -10,6 +10,8 @@ import {
   findNextFixture,
   formatSlackMessage,
   formatNextUpdateBlock,
+  loadLastUpdate,
+  saveLastUpdate,
 } from '../scripts/sweepstake-update';
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
@@ -369,5 +371,71 @@ describe('formatNextUpdateBlock', () => {
     const fixture = { match: m, isDerby: false, participants: [p] };
     const block = formatNextUpdateBlock(fixture);
     expect(block).toContain('16:45:00 UTC');
+  });
+});
+
+// ─── loadLastUpdate ───────────────────────────────────────────────────────────
+
+describe('loadLastUpdate', () => {
+  const tmpFile = path.join(os.tmpdir(), `sweepstake-test-load-${Date.now()}.json`);
+
+  afterEach(() => {
+    if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
+  });
+
+  it('returns the stored timestamp when file exists and is valid', () => {
+    const ts = '2026-06-14T10:00:00.000Z';
+    fs.writeFileSync(tmpFile, JSON.stringify({ lastUpdate: ts }));
+    expect(loadLastUpdate(tmpFile)).toBe(ts);
+  });
+
+  it('returns a timestamp ~24h ago when file does not exist', () => {
+    const before = Date.now();
+    const result = loadLastUpdate('/nonexistent/path/last-update.json');
+    const parsed = new Date(result).getTime();
+    const expectedApprox = before - 24 * 60 * 60 * 1000;
+    expect(parsed).toBeGreaterThanOrEqual(expectedApprox - 1000);
+    expect(parsed).toBeLessThanOrEqual(before);
+  });
+
+  it('returns a timestamp ~24h ago when file is malformed JSON', () => {
+    fs.writeFileSync(tmpFile, 'not valid json');
+    const before = Date.now();
+    const result = loadLastUpdate(tmpFile);
+    const parsed = new Date(result).getTime();
+    const expectedApprox = before - 24 * 60 * 60 * 1000;
+    expect(parsed).toBeGreaterThanOrEqual(expectedApprox - 1000);
+  });
+
+  it('returns a timestamp ~24h ago when file has wrong shape', () => {
+    fs.writeFileSync(tmpFile, JSON.stringify({ notLastUpdate: 'value' }));
+    const result = loadLastUpdate(tmpFile);
+    expect(new Date(result).getTime()).toBeLessThan(Date.now());
+  });
+});
+
+// ─── saveLastUpdate ───────────────────────────────────────────────────────────
+
+describe('saveLastUpdate', () => {
+  const tmpFile = path.join(os.tmpdir(), `sweepstake-test-save-${Date.now()}.json`);
+
+  afterEach(() => {
+    if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
+  });
+
+  it('writes a JSON file with the correct timestamp', () => {
+    const ts = '2026-06-15T09:00:00.000Z';
+    saveLastUpdate(tmpFile, ts);
+    const raw = fs.readFileSync(tmpFile, 'utf-8');
+    const parsed = JSON.parse(raw);
+    expect(parsed.lastUpdate).toBe(ts);
+  });
+
+  it('overwrites an existing file', () => {
+    fs.writeFileSync(tmpFile, JSON.stringify({ lastUpdate: '2026-01-01T00:00:00Z' }));
+    const newTs = '2026-06-15T09:00:00.000Z';
+    saveLastUpdate(tmpFile, newTs);
+    const parsed = JSON.parse(fs.readFileSync(tmpFile, 'utf-8'));
+    expect(parsed.lastUpdate).toBe(newTs);
   });
 });

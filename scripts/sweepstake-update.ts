@@ -117,6 +117,10 @@ function formatGroupRecord(stats: GroupStats): string {
   return `${stats.won}W ${stats.drawn}D ${stats.lost}L, ${stats.points} pts`;
 }
 
+function formatScore(match: Match): string {
+  return `${match.score.fullTime.home}–${match.score.fullTime.away}`;
+}
+
 export function formatSlackMessage(
   eliminations: ParticipantStanding[],
   derbies: DerbyResult[],
@@ -127,7 +131,7 @@ export function formatSlackMessage(
   lines.push("⚽ Sweepstake update — here's what you missed...\n");
 
   if (eliminations.length === 0 && derbies.length === 0 && notableResults.length === 0) {
-    lines.push(`No changes since last update — ${activeCount}/29 still alive.`);
+    lines.push(`No changes since last update — ${activeCount}/${draw.length} still alive.`);
   } else {
     for (const s of eliminations) {
       lines.push(
@@ -135,9 +139,7 @@ export function formatSlackMessage(
       );
     }
     for (const d of derbies) {
-      const h = d.match.score.fullTime.home;
-      const a = d.match.score.fullTime.away;
-      const score = `${h}–${a}`;
+      const score = formatScore(d.match);
       const winnerLine =
         d.match.score.winner === 'HOME_TEAM'
           ? ` — ${d.homeParticipant.name} takes the bragging rights`
@@ -149,9 +151,7 @@ export function formatSlackMessage(
       );
     }
     for (const n of notableResults) {
-      const h = n.match.score.fullTime.home;
-      const a = n.match.score.fullTime.away;
-      const score = `${h}–${a}`;
+      const score = formatScore(n.match);
       const opponent = n.side === 'home' ? n.match.awayTeam.name : n.match.homeTeam.name;
       lines.push(
         `${n.participant.name}'s ${n.participant.team} ${n.participant.flag} beat ${opponent} ${score} [edit]`
@@ -160,7 +160,7 @@ export function formatSlackMessage(
   }
 
   lines.push('');
-  lines.push(`Still alive: ${activeCount}/29`);
+  lines.push(`Still alive: ${activeCount}/${draw.length}`);
   lines.push(`Full standings 👉 ${APP_URL}`);
   return lines.join('\n');
 }

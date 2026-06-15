@@ -1,16 +1,6 @@
 import type { Match, Participant } from '@/lib/types';
 import { STAGE_LABELS } from '@/lib/stageLabels';
-
-function formatKickoff(utcDate: string): string {
-  return new Date(utcDate).toLocaleString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'UTC',
-    timeZoneName: 'short',
-  });
-}
+import { formatKickoff } from '@/lib/formatDate';
 
 interface NextMatchProps {
   match: Match | null;
@@ -47,7 +37,7 @@ export function NextMatch({ match, draw }: NextMatchProps) {
 
   return (
     <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl p-4 mb-6">
-      <div className="text-xs font-semibold uppercase tracking-wider mb-2 opacity-80">
+      <div className="text-center text-xs font-semibold uppercase tracking-wider mb-2 opacity-80">
         {isLive
           ? <span className="animate-pulse">🔴 Live Now</span>
           : isDerby
