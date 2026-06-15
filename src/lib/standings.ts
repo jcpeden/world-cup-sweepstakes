@@ -128,9 +128,11 @@ function getEliminationDate(
   matches: Match[],
   teamName: string,
   stage: TournamentStage,
-  isActive: boolean
+  isActive: boolean,
+  finalResult: 'won' | 'lost' | 'none'
 ): string | undefined {
   if (isActive) return undefined;
+  if (finalResult === 'won') return undefined; // champion or 3rd-place winner — not eliminated
 
   if (stage === 'GROUP_STAGE') {
     const finished = matches
@@ -144,6 +146,7 @@ function getEliminationDate(
     return finished[0]?.utcDate;
   }
 
+  // A team plays at most one match per knockout stage — find() is deterministic here
   return matches.find(
     m =>
       m.stage === stage &&
@@ -161,7 +164,7 @@ export function computeStandings(matches: Match[]): ParticipantStanding[] {
     const gamesPlayed = groupStats.won + groupStats.drawn + groupStats.lost;
     const rankScore = getRankScore(stage, isActive, finalResult, groupPoints, gamesPlayed);
 
-    const eliminatedDate = getEliminationDate(matches, teamName, stage, isActive);
+    const eliminatedDate = getEliminationDate(matches, teamName, stage, isActive, finalResult);
     const status: ParticipantStatus = isActive ? 'active' : 'eliminated';
 
     return { rank: 0, tied: false, participant, stage, status, rankScore, groupStats, eliminatedDate };
