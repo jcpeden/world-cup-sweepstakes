@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sweepstake-update": "ts-node --project tsconfig.scripts.json scripts/sweepstake-update.ts"
   },
   "dependencies": {
     "next": "16.2.9",
@@ -19,12 +20,14 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.9",
     "jest": "^30.4.2",
     "jest-environment-node": "^30.4.1",
     "tailwindcss": "^4",
     "ts-jest": "^29.4.11",
+    "ts-node": "^10.9.2",
     "typescript": "^5"
   }
 }
