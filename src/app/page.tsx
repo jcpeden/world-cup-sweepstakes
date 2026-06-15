@@ -3,6 +3,7 @@ import { computeStandings } from '@/lib/standings';
 import { draw } from '@/data/draw';
 import { NextMatch } from '@/components/NextMatch';
 import { Leaderboard } from '@/components/Leaderboard';
+import { PrizePot } from '@/components/PrizePot';
 
 export const revalidate = 60;
 
@@ -18,6 +19,7 @@ export default async function Home() {
         <h1 className="text-3xl font-bold text-gray-900">World Cup 2026</h1>
         <p className="text-gray-500 mt-1">Sweepstakes · Live Standings</p>
       </header>
+      <PrizePot />
       <NextMatch match={nextMatch} draw={draw} />
       <Leaderboard standings={standings} />
       <p className="text-center text-xs text-gray-400 mt-6">
