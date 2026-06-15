@@ -3,6 +3,14 @@
 import type { ParticipantStanding } from '@/lib/types';
 import { STAGE_LABELS } from '@/lib/stageLabels';
 
+function formatEliminationDate(utcDate: string): string {
+  return new Date(utcDate).toLocaleDateString('en-GB', {
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
+}
+
 function StatusBadge({ standing }: { standing: ParticipantStanding }) {
   if (standing.rank === 1 && !standing.tied) {
     return (
@@ -102,6 +110,32 @@ export function Leaderboard({ standings }: LeaderboardProps) {
           {eliminated.map(s => (
             <StandingRow key={s.participant.name} standing={s} />
           ))}
+          {(() => {
+            const timelineEntries = eliminated
+              .filter(s => s.eliminatedDate !== undefined)
+              .sort((a, b) =>
+                new Date(b.eliminatedDate!).getTime() - new Date(a.eliminatedDate!).getTime()
+              );
+            if (timelineEntries.length === 0) return null;
+            return (
+              <div className="border-t border-gray-100 mt-1">
+                <div className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                  Timeline
+                </div>
+                <ul className="overflow-y-auto max-h-60">
+                  {timelineEntries.map(s => (
+                    <li key={s.participant.name} className="px-4 py-2 text-xs text-gray-500 border-b border-gray-50 last:border-0">
+                      {s.participant.flag}{' '}
+                      <span className="font-medium text-gray-700">{s.participant.team}</span>
+                      {' '}eliminated —{' '}
+                      <span className="font-medium">{s.participant.name}</span>
+                      {' '}out — {STAGE_LABELS[s.stage]} · {formatEliminationDate(s.eliminatedDate!)}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>
