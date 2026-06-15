@@ -83,7 +83,7 @@ export function findNotableResults(
         m.score.winner !== 'DRAW' &&
         m.score.winner !== null
     )
-    .flatMap(m => {
+    .flatMap((m): NotableResult[] => {
       const home = teamNameMap.get(m.homeTeam.name);
       const away = teamNameMap.get(m.awayTeam.name);
       if (m.score.winner === 'HOME_TEAM' && home) {
@@ -193,4 +193,77 @@ export function formatNextUpdateBlock(fixture: NextFixture | null): string {
     `Suggested: run sweepstake-update after ${suggestedStr} (kick-off + 90 min match + 15 min buffer)`
   );
   return lines.join('\n');
+}
+
+// ─── I/O ─────────────────────────────────────────────────────────────────────
+
+export function loadLastUpdate(filePath: string): string {
+  try {
+    const raw = fs.readFileSync(filePath, 'utf-8');
+    const parsed = JSON.parse(raw) as { lastUpdate?: unknown };
+    if (typeof parsed.lastUpdate === 'string') {
+      return parsed.lastUpdate;
+    }
+  } catch {
+    // File missing or malformed — fall through to default
+  }
+  console.error('⚠️  last-update.json not found or malformed — defaulting to 24h ago');
+  return new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+}
+
+export function saveLastUpdate(filePath: string, timestamp: string): void {
+  fs.writeFileSync(filePath, JSON.stringify({ lastUpdate: timestamp }, null, 2) + '\n');
+}
+
+export function copyToClipboard(text: string): void {
+  const result = spawnSync('pbcopy', [], { input: text, encoding: 'utf8' });
+  if (result.status !== 0) {
+    console.error('⚠️  pbcopy not available — skipping clipboard copy');
+  }
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
+async function main(): Promise<void> {
+  dotenv.config({ path: path.join(process.cwd(), '.env.local') });
+
+  if (!process.env.FOOTBALL_DATA_API_KEY) {
+    console.error('Error: FOOTBALL_DATA_API_KEY not set in .env.local');
+    process.exit(1);
+  }
+
+  const lastUpdate = loadLastUpdate(LAST_UPDATE_PATH);
+
+  const matches = await getMatches();
+  if (!matches.length) {
+    console.error('Error: Failed to fetch matches from football-data.org');
+    process.exit(1);
+  }
+
+  const standings = computeStandings(matches);
+  const teamNameMap = buildTeamNameMap(draw);
+
+  const eliminations = findEliminations(standings, lastUpdate);
+  const derbies = findDerbies(matches, teamNameMap, lastUpdate);
+  const notableResults = findNotableResults(matches, teamNameMap, lastUpdate, derbies);
+  const activeCount = standings.filter(s => s.status === 'active').length;
+  const nextFixture = findNextFixture(matches, teamNameMap);
+
+  const slackMessage = formatSlackMessage(eliminations, derbies, notableResults, activeCount);
+  const nextUpdateBlock = formatNextUpdateBlock(nextFixture);
+
+  console.log(slackMessage);
+  console.log('');
+  copyToClipboard(slackMessage);
+  process.stderr.write('✓ Copied to clipboard\n\n');
+  process.stderr.write(nextUpdateBlock + '\n');
+
+  saveLastUpdate(LAST_UPDATE_PATH, new Date().toISOString());
+}
+
+if (require.main === module) {
+  main().catch(err => {
+    console.error('Fatal error:', err);
+    process.exit(1);
+  });
 }

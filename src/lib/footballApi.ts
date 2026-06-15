@@ -8,8 +8,9 @@ async function fetchWithAuth(path: string): Promise<unknown> {
     headers: {
       'X-Auth-Token': process.env.FOOTBALL_DATA_API_KEY ?? '',
     },
+    // next.revalidate is a Next.js fetch extension; cast to RequestInit for ts-node compatibility
     next: { revalidate: 60 },
-  });
+  } as RequestInit);
 
   if (!res.ok) {
     throw new Error(`football-data.org error: ${res.status}`);
