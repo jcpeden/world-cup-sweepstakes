@@ -88,27 +88,24 @@ function getTeamCurrentStage(
   }
 
   // Still in group stage: active until 3 games are finished and team didn't appear in LAST_32
-  const finishedGroupMatches = matches.filter(
-    m =>
-      m.stage === 'GROUP_STAGE' &&
-      m.status === 'FINISHED' &&
-      (m.homeTeam.name === teamName || m.awayTeam.name === teamName)
-  );
-
   return {
     stage: 'GROUP_STAGE',
-    isActive: finishedGroupMatches.length < 3,
+    isActive: getFinishedGroupMatches(matches, teamName).length < 3,
     finalResult: 'none',
   };
 }
 
-function getGroupStats(matches: Match[], teamName: string): GroupStats {
-  const groupMatches = matches.filter(
+function getFinishedGroupMatches(matches: Match[], teamName: string): Match[] {
+  return matches.filter(
     m =>
       m.stage === 'GROUP_STAGE' &&
       m.status === 'FINISHED' &&
       (m.homeTeam.name === teamName || m.awayTeam.name === teamName)
   );
+}
+
+function getGroupStats(matches: Match[], teamName: string): GroupStats {
+  const groupMatches = getFinishedGroupMatches(matches, teamName);
 
   return groupMatches.reduce<GroupStats>(
     (stats, m) => {
@@ -135,15 +132,12 @@ function getEliminationDate(
   if (finalResult === 'won') return undefined; // champion or 3rd-place winner — not eliminated
 
   if (stage === 'GROUP_STAGE') {
-    const finished = matches
-      .filter(
-        m =>
-          m.stage === 'GROUP_STAGE' &&
-          m.status === 'FINISHED' &&
-          (m.homeTeam.name === teamName || m.awayTeam.name === teamName)
-      )
-      .sort((a, b) => new Date(b.utcDate).getTime() - new Date(a.utcDate).getTime());
-    return finished[0]?.utcDate;
+    return getFinishedGroupMatches(matches, teamName)
+      .reduce<Match | null>(
+        (latest, m) =>
+          !latest || new Date(m.utcDate) > new Date(latest.utcDate) ? m : latest,
+        null
+      )?.utcDate;
   }
 
   // A team plays at most one match per knockout stage — find() is deterministic here

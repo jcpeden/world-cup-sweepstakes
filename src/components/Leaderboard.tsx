@@ -129,7 +129,7 @@ export function Leaderboard({ standings }: LeaderboardProps) {
                       <span className="font-medium text-gray-700">{s.participant.team}</span>
                       {' '}eliminated —{' '}
                       <span className="font-medium">{s.participant.name}</span>
-                      {' '}out — {STAGE_LABELS[s.stage]} · {formatEliminationDate(s.eliminatedDate!)}
+                      {' '}out — {STAGE_LABELS[s.stage] ?? s.stage} · {formatEliminationDate(s.eliminatedDate!)}
                     </li>
                   ))}
                 </ul>
