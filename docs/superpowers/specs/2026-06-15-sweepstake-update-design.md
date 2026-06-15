@@ -107,7 +107,7 @@ computeStandings(matches)        # src/lib/standings.ts
 football-data.org names sometimes differ from display names in `draw.ts`. Always resolve using:
 
 ```typescript
-participant.apiName ?? participant.team
+participant.apiName ?? participant.team;
 ```
 
 This covers cases like `Bosnia and Herzegovina` → `"Bosnia-Herzegovina"` (apiName).
@@ -128,6 +128,7 @@ Full standings 👉 https://world-cup-sweepstakes-rose.vercel.app/
 ```
 
 Rules:
+
 - One punchy line per elimination. Template provides the fact; user edits the flavour.
 - Derby result lines include both participants by first name.
 - Notable result lines include the participant's first name.
@@ -152,6 +153,7 @@ Printed to stderr so it does not contaminate the clipboard copy.
 ## State File
 
 `scripts/last-update.json`:
+
 ```json
 { "lastUpdate": "2026-06-15T14:30:00.000Z" }
 ```
@@ -164,14 +166,14 @@ Printed to stderr so it does not contaminate the clipboard copy.
 
 ## Error Handling
 
-| Scenario | Behaviour |
-|---|---|
-| API key missing | Exit with clear message: `"Error: FOOTBALL_DATA_API_KEY not set in .env.local"` |
-| API request fails | Exit with message; do not update last-update.json |
-| Rate limit (429) | Exit with message; do not update last-update.json |
-| last-update.json malformed | Warn and default to 24h ago; continue |
-| pbcopy not available (non-macOS) | Print message only; skip clipboard; warn |
-| No sweepstake changes detected | Generate minimal message ("No changes since last update") |
+| Scenario                         | Behaviour                                                                       |
+| -------------------------------- | ------------------------------------------------------------------------------- |
+| API key missing                  | Exit with clear message: `"Error: FOOTBALL_DATA_API_KEY not set in .env.local"` |
+| API request fails                | Exit with message; do not update last-update.json                               |
+| Rate limit (429)                 | Exit with message; do not update last-update.json                               |
+| last-update.json malformed       | Warn and default to 24h ago; continue                                           |
+| pbcopy not available (non-macOS) | Print message only; skip clipboard; warn                                        |
+| No sweepstake changes detected   | Generate minimal message ("No changes since last update")                       |
 
 ---
 
@@ -188,11 +190,12 @@ scripts/last-update.json
 The generated one-liners are lightly templated — factually complete but left for the user to personalise before posting. Templates read naturally but are marked for editing where tone matters most.
 
 Example templates:
+
 - Elimination: `"Stuart's Bosnia are out — beaten [score] by [opponent] [edit me]"`
 - Derby win: `"Patrick's Netherlands [score] Jill's Japan — Patrick's week just got better"`
 - Notable win: `"Nelson's Argentina beat Iran 3–0 — Messi era ending well so far"`
 
-Author voice for edits: casual, first-person, football-literate, Irishman-in-Manchester energy.
+Author voice for edits: casual, first-person, football-literate, privately-educated Mancunian with an engineering degree
 
 ---
 
