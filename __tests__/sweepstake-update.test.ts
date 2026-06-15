@@ -14,6 +14,8 @@ import {
 
 // ─── Test helpers ─────────────────────────────────────────────────────────────
 
+let _matchId = 0;
+
 function makeParticipant(overrides: Partial<Participant> = {}): Participant {
   return {
     name: 'Test Person',
@@ -30,7 +32,7 @@ function makeMatch(
   overrides: Partial<Omit<Match, 'homeTeam' | 'awayTeam'>> = {}
 ): Match {
   return {
-    id: Math.random(),
+    id: ++_matchId,
     stage: 'GROUP_STAGE',
     status: 'FINISHED',
     utcDate: '2026-06-14T12:00:00Z',
@@ -311,6 +313,17 @@ describe('formatSlackMessage', () => {
     const derby = { match: m, homeParticipant: p1, awayParticipant: p2 };
     const msg = formatSlackMessage([], [derby], [], 29);
     expect(msg).toContain('honours even');
+  });
+
+  it('formats the group record correctly in elimination line', () => {
+    const p = makeParticipant({ name: 'Ron', team: 'Qatar', flag: '🇶🇦' });
+    const s = makeStanding(p, {
+      status: 'eliminated',
+      eliminatedDate: '2026-06-14T12:00:00Z',
+      groupStats: { won: 2, drawn: 1, lost: 0, points: 7 },
+    });
+    const msg = formatSlackMessage([s], [], [], 28);
+    expect(msg).toContain('2W 1D 0L, 7 pts');
   });
 });
 
