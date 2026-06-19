@@ -178,6 +178,7 @@ export const draw: Participant[] = [
   {
     name: "Zoe",
     team: "Türkiye",
+    apiName: "Turkey",
     flag: "🇹🇷",
     avatar:
       "https://cdn.theorg.com/899daa80-eca2-436e-b434-cfc77f096fe2_medium.jpg",
