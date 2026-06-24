@@ -52,6 +52,9 @@ export interface GroupStats {
   drawn: number;
   lost: number;
   points: number;
+  goalsFor: number;
+  goalsAgainst: number;
+  goalDifference: number;
 }
 
 export type ParticipantStatus = 'active' | 'eliminated';

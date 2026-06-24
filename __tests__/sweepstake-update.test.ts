@@ -56,7 +56,7 @@ function makeStanding(
     stage: 'GROUP_STAGE',
     status: 'active',
     rankScore: 10,
-    groupStats: { won: 0, drawn: 0, lost: 0, points: 0 },
+    groupStats: { won: 0, drawn: 0, lost: 0, points: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 },
     ...overrides,
   };
 }
@@ -271,7 +271,7 @@ describe('formatSlackMessage', () => {
     const s = makeStanding(p, {
       status: 'eliminated',
       eliminatedDate: '2026-06-14T12:00:00Z',
-      groupStats: { won: 0, drawn: 1, lost: 2, points: 1 },
+      groupStats: { won: 0, drawn: 1, lost: 2, points: 1, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 },
     });
     const msg = formatSlackMessage([s], [], [], 28);
     expect(msg).toContain("Stuart's");
@@ -322,7 +322,7 @@ describe('formatSlackMessage', () => {
     const s = makeStanding(p, {
       status: 'eliminated',
       eliminatedDate: '2026-06-14T12:00:00Z',
-      groupStats: { won: 2, drawn: 1, lost: 0, points: 7 },
+      groupStats: { won: 2, drawn: 1, lost: 0, points: 7, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 },
     });
     const msg = formatSlackMessage([s], [], [], 28);
     expect(msg).toContain('2W 1D 0L, 7 pts');

@@ -109,15 +109,41 @@ function getGroupStats(matches: Match[], teamName: string): GroupStats {
 
   return groupMatches.reduce<GroupStats>(
     (stats, m) => {
-      if (m.score.winner === 'DRAW') return { ...stats, drawn: stats.drawn + 1, points: stats.points + 1 };
-      if (m.score.winner === null) return stats;
       const isHome = m.homeTeam.name === teamName;
+      const gf = isHome ? (m.score.fullTime.home ?? 0) : (m.score.fullTime.away ?? 0);
+      const ga = isHome ? (m.score.fullTime.away ?? 0) : (m.score.fullTime.home ?? 0);
+
+      if (m.score.winner === 'DRAW') {
+        return {
+          ...stats,
+          drawn: stats.drawn + 1,
+          points: stats.points + 1,
+          goalsFor: stats.goalsFor + gf,
+          goalsAgainst: stats.goalsAgainst + ga,
+          goalDifference: stats.goalDifference + (gf - ga),
+        };
+      }
+      if (m.score.winner === null) return stats;
+
       const won = isHome ? m.score.winner === 'HOME_TEAM' : m.score.winner === 'AWAY_TEAM';
       return won
-        ? { ...stats, won: stats.won + 1, points: stats.points + 3 }
-        : { ...stats, lost: stats.lost + 1 };
+        ? {
+            ...stats,
+            won: stats.won + 1,
+            points: stats.points + 3,
+            goalsFor: stats.goalsFor + gf,
+            goalsAgainst: stats.goalsAgainst + ga,
+            goalDifference: stats.goalDifference + (gf - ga),
+          }
+        : {
+            ...stats,
+            lost: stats.lost + 1,
+            goalsFor: stats.goalsFor + gf,
+            goalsAgainst: stats.goalsAgainst + ga,
+            goalDifference: stats.goalDifference + (gf - ga),
+          };
     },
-    { won: 0, drawn: 0, lost: 0, points: 0 }
+    { won: 0, drawn: 0, lost: 0, points: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 }
   );
 }
 

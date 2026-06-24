@@ -301,7 +301,15 @@ describe('computeStandings', () => {
     it('starts at all-zero before any matches are played', () => {
       const standings = computeStandings([]);
       const nelson = standings.find(s => s.participant.name === 'Nelson')!;
-      expect(nelson.groupStats).toEqual({ won: 0, drawn: 0, lost: 0, points: 0 });
+      expect(nelson.groupStats).toEqual({
+        won: 0,
+        drawn: 0,
+        lost: 0,
+        points: 0,
+        goalsFor: 0,
+        goalsAgainst: 0,
+        goalDifference: 0,
+      });
     });
 
     it('accumulates W/D/L and points from finished group matches', () => {
@@ -312,7 +320,15 @@ describe('computeStandings', () => {
       ];
       const standings = computeStandings(matches);
       const nelson = standings.find(s => s.participant.name === 'Nelson')!; // Argentina
-      expect(nelson.groupStats).toEqual({ won: 1, drawn: 1, lost: 1, points: 4 });
+      expect(nelson.groupStats).toEqual({
+        won: 1,
+        drawn: 1,
+        lost: 1,
+        points: 4,
+        goalsFor: 3,
+        goalsAgainst: 2,
+        goalDifference: 1,
+      });
     });
   });
 
