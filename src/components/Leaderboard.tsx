@@ -33,6 +33,13 @@ function StatusBadge({ standing }: { standing: ParticipantStanding }) {
       </span>
     );
   }
+  if (standing.status === 'at_risk') {
+    return (
+      <span className="bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full">
+        ⚠️ At Risk
+      </span>
+    );
+  }
   if (standing.status === 'active') {
     return (
       <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full">
