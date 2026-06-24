@@ -1,4 +1,10 @@
-import { computeStandings, isMathematicallyEliminated, rankGroupTeams } from '@/lib/standings';
+import {
+  computeStandings,
+  isMathematicallyEliminated,
+  rankGroupTeams,
+  computeAllGroupPositions,
+  computeThirdPlaceTable,
+} from '@/lib/standings';
 import type { Match } from '@/lib/types';
 
 function makeMatch(
@@ -472,6 +478,67 @@ describe('computeStandings', () => {
       ];
       // fourthMax = 3+3 = 6, thirdMin = 3+0 = 3 → 6 > 3 → can overtake on points
       expect(isMathematicallyEliminated('Haiti', 'Scotland', matches)).toBe(false);
+    });
+  });
+
+  describe('computeAllGroupPositions', () => {
+    it('returns position 1 for a team with most points in their group', () => {
+      const matches: Match[] = [
+        // Argentina beats Algeria and Austria — 6pts, top of Group J
+        makeMatch('Argentina', 'Algeria', { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } } }),
+        makeMatch('Argentina', 'Austria', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+      ];
+      const positions = computeAllGroupPositions(matches);
+      expect(positions.get('Argentina')?.position).toBe(1);
+      expect(positions.get('Argentina')?.groupName).toBe('Group J');
+    });
+
+    it('returns position 4 for the team with fewest points in their group', () => {
+      const matches: Match[] = [
+        makeMatch('Argentina', 'Jordan', { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } } }),
+        makeMatch('Algeria',   'Jordan', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+        makeMatch('Austria',   'Jordan', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+      ];
+      const positions = computeAllGroupPositions(matches);
+      expect(positions.get('Jordan')?.position).toBe(4);
+    });
+
+    it('contains an entry for all 48 teams', () => {
+      const positions = computeAllGroupPositions([]);
+      expect(positions.size).toBe(48);
+    });
+  });
+
+  describe('computeThirdPlaceTable', () => {
+    it('returns 12 teams — one per group', () => {
+      const positions = computeAllGroupPositions([]);
+      const table = computeThirdPlaceTable(positions, []);
+      expect(table).toHaveLength(12);
+    });
+
+    it('ranks third-place teams by points descending', () => {
+      // Set up matches so England is the 3rd-place team in Group L with 6pts
+      // and Algeria is the 3rd-place team in Group J with 3pts
+      const matches: Match[] = [
+        // Group L: Croatia 1st, Ghana 2nd, England 3rd (6pts from beating Panama twice)
+        makeMatch('Croatia',  'Panama',  { score: { winner: 'HOME_TEAM', fullTime: { home: 3, away: 0 } } }),
+        makeMatch('Croatia',  'Ghana',   { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } } }),
+        makeMatch('Ghana',    'England', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+        makeMatch('England',  'Panama',  { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } } }),
+        makeMatch('England',  'Ghana',   { score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 3 } } }),
+        // Group J: Argentina 1st, Austria 2nd, Algeria 3rd (3pts)
+        makeMatch('Argentina', 'Jordan',  { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } } }),
+        makeMatch('Argentina', 'Algeria', { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } } }),
+        makeMatch('Austria',   'Jordan',  { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+        makeMatch('Algeria',   'Austria', { score: { winner: 'AWAY_TEAM', fullTime: { home: 0, away: 1 } } }),
+        makeMatch('Algeria',   'Jordan',  { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+      ];
+      const positions = computeAllGroupPositions(matches);
+      const table = computeThirdPlaceTable(positions, matches);
+      const englandIndex = table.indexOf('England');
+      const algeriaIndex = table.indexOf('Algeria');
+      // England (6pts as 3rd) should rank above Algeria (3pts as 3rd)
+      expect(englandIndex).toBeLessThan(algeriaIndex);
     });
   });
 });

@@ -1,4 +1,5 @@
 import { draw } from '@/data/draw';
+import { groups } from '@/data/groups';
 import type { Match, ParticipantStanding, ParticipantStatus, TournamentStage, GroupStats } from './types';
 
 // Higher number = better rank
@@ -231,6 +232,41 @@ export function rankGroupTeams(groupTeams: string[], matches: Match[]): string[]
   }
 
   return sorted;
+}
+
+export function computeAllGroupPositions(
+  matches: Match[]
+): Map<string, { position: 1 | 2 | 3 | 4; groupName: string }> {
+  const result = new Map<string, { position: 1 | 2 | 3 | 4; groupName: string }>();
+
+  for (const group of groups) {
+    const ranked = rankGroupTeams(group.teams, matches);
+    ranked.forEach((teamName, index) => {
+      result.set(teamName, {
+        position: (index + 1) as 1 | 2 | 3 | 4,
+        groupName: group.name,
+      });
+    });
+  }
+
+  return result;
+}
+
+export function computeThirdPlaceTable(
+  allGroupPositions: Map<string, { position: 1 | 2 | 3 | 4; groupName: string }>,
+  matches: Match[]
+): string[] {
+  const thirdPlaceTeams: string[] = [];
+  for (const [teamName, { position }] of allGroupPositions) {
+    if (position === 3) thirdPlaceTeams.push(teamName);
+  }
+
+  const stats = new Map(thirdPlaceTeams.map(t => [t, getGroupStats(matches, t)]));
+
+  return [...thirdPlaceTeams].sort((a, b) => {
+    const cmp = compareByStats(stats.get(a)!, stats.get(b)!);
+    return cmp !== 0 ? cmp : a.localeCompare(b);
+  });
 }
 
 function getEliminationDate(
