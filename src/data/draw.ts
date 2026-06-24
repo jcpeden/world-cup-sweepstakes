@@ -80,7 +80,7 @@ export const draw: Participant[] = [
       "https://avatars.slack-edge.com/2025-06-23/9077224048711_6ce8830c41c0c79a3e9c_192.jpg",
   },
   {
-    name: "Charlie Chrisman",
+    name: "Charlie",
     team: "Norway",
     flag: "🇳🇴",
     avatar:
@@ -191,7 +191,7 @@ export const draw: Participant[] = [
       "https://avatars.slack-edge.com/2023-04-26/5195156399328_126598cd825fe37c6329_192.jpg",
   },
   {
-    name: "Charlie Bell",
+    name: "Charlie",
     team: "Ecuador",
     flag: "🇪🇨",
     avatar:
