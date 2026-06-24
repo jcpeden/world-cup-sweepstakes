@@ -104,10 +104,8 @@ function getFinishedGroupMatches(matches: Match[], teamName: string): Match[] {
   );
 }
 
-function getGroupStats(matches: Match[], teamName: string): GroupStats {
-  const groupMatches = getFinishedGroupMatches(matches, teamName);
-
-  return groupMatches.reduce<GroupStats>(
+function accumulateMatchStats(teamName: string, filteredMatches: Match[]): GroupStats {
+  return filteredMatches.reduce<GroupStats>(
     (stats, m) => {
       const isHome = m.homeTeam.name === teamName;
       const gf = isHome ? (m.score.fullTime.home ?? 0) : (m.score.fullTime.away ?? 0);
@@ -145,6 +143,10 @@ function getGroupStats(matches: Match[], teamName: string): GroupStats {
     },
     { won: 0, drawn: 0, lost: 0, points: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 }
   );
+}
+
+function getGroupStats(matches: Match[], teamName: string): GroupStats {
+  return accumulateMatchStats(teamName, getFinishedGroupMatches(matches, teamName));
 }
 
 export function isMathematicallyEliminated(
@@ -186,33 +188,10 @@ function getH2HStats(teamName: string, opponents: string[], matches: Match[]): G
     m =>
       m.stage === 'GROUP_STAGE' &&
       m.status === 'FINISHED' &&
-      ((m.homeTeam.name === teamName  && opponents.includes(m.awayTeam.name)) ||
-       (m.awayTeam.name === teamName  && opponents.includes(m.homeTeam.name)))
+      ((m.homeTeam.name === teamName && opponents.includes(m.awayTeam.name)) ||
+       (m.awayTeam.name === teamName && opponents.includes(m.homeTeam.name)))
   );
-
-  return h2hMatches.reduce<GroupStats>(
-    (stats, m) => {
-      const isHome = m.homeTeam.name === teamName;
-      const gf = isHome ? (m.score.fullTime.home ?? 0) : (m.score.fullTime.away ?? 0);
-      const ga = isHome ? (m.score.fullTime.away ?? 0) : (m.score.fullTime.home ?? 0);
-
-      if (m.score.winner === 'DRAW') {
-        return { ...stats, drawn: stats.drawn + 1, points: stats.points + 1,
-          goalsFor: stats.goalsFor + gf, goalsAgainst: stats.goalsAgainst + ga,
-          goalDifference: stats.goalDifference + (gf - ga) };
-      }
-      if (m.score.winner === null) return stats;
-      const won = isHome ? m.score.winner === 'HOME_TEAM' : m.score.winner === 'AWAY_TEAM';
-      return won
-        ? { ...stats, won: stats.won + 1, points: stats.points + 3,
-            goalsFor: stats.goalsFor + gf, goalsAgainst: stats.goalsAgainst + ga,
-            goalDifference: stats.goalDifference + (gf - ga) }
-        : { ...stats, lost: stats.lost + 1,
-            goalsFor: stats.goalsFor + gf, goalsAgainst: stats.goalsAgainst + ga,
-            goalDifference: stats.goalDifference + (gf - ga) };
-    },
-    { won: 0, drawn: 0, lost: 0, points: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 }
-  );
+  return accumulateMatchStats(teamName, h2hMatches);
 }
 
 function compareByStats(sa: GroupStats, sb: GroupStats): number {
