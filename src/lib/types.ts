@@ -57,7 +57,7 @@ export interface GroupStats {
   goalDifference: number;
 }
 
-export type ParticipantStatus = 'active' | 'eliminated';
+export type ParticipantStatus = 'active' | 'at_risk' | 'eliminated';
 
 export interface ParticipantStanding {
   rank: number;
@@ -67,5 +67,6 @@ export interface ParticipantStanding {
   status: ParticipantStatus;
   rankScore: number;
   groupStats: GroupStats;
+  groupPosition?: 1 | 2 | 3 | 4; // defined during GROUP_STAGE, undefined in knockout rounds
   eliminatedDate?: string;
 }

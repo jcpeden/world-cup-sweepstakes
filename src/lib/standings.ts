@@ -18,7 +18,8 @@ function getRankScore(
   isActive: boolean,
   finalResult: 'won' | 'lost' | 'none',
   groupPoints: number,
-  gamesPlayed: number
+  groupPosition: 1 | 2 | 3 | 4 | undefined,
+  thirdPlaceRank: number | undefined // 1-indexed (1=best), undefined if not 3rd place
 ): number {
   if (stage === 'FINAL') {
     if (finalResult === 'won') return 1000;
@@ -31,9 +32,16 @@ function getRankScore(
     return STAGE_RANK.THIRD_PLACE + 5;
   }
   if (stage === 'GROUP_STAGE') {
-    // Tiebreakers in order: 1) points, 2) games remaining (fewer played = more potential)
-    // Encodes as fractional component: 0 games → +0.3, 1 game → +0.2, 2 games → +0.1, 3 games → +0.0
-    return STAGE_RANK.GROUP_STAGE + groupPoints + (3 - gamesPlayed) / 10;
+    if (!isActive) return groupPoints / 10; // eliminated tier: 0.0–0.9
+    const pts = groupPoints / 10;
+    if (groupPosition === 1) return 14 + pts;
+    if (groupPosition === 2) return 10 + pts;
+    if (groupPosition === 3) {
+      const safe = thirdPlaceRank !== undefined && thirdPlaceRank <= 8;
+      return safe ? 7 + pts : 4 + pts;
+    }
+    // 4th place — at risk (mathematically eliminated 4th are caught by !isActive above)
+    return 2 + pts;
   }
   return isActive ? STAGE_RANK[stage] + 5 : STAGE_RANK[stage];
 }
@@ -298,18 +306,53 @@ function getEliminationDate(
 }
 
 export function computeStandings(matches: Match[]): ParticipantStanding[] {
+  const allGroupPositions = computeAllGroupPositions(matches);
+  const thirdPlaceTable   = computeThirdPlaceTable(allGroupPositions, matches);
+
   const standings: ParticipantStanding[] = draw.map(participant => {
     const teamName = participant.apiName ?? participant.team;
-    const { stage, isActive, finalResult } = getTeamCurrentStage(matches, teamName);
-    const groupStats = getGroupStats(matches, teamName);
-    const groupPoints = groupStats.points;
-    const gamesPlayed = groupStats.won + groupStats.drawn + groupStats.lost;
-    const rankScore = getRankScore(stage, isActive, finalResult, groupPoints, gamesPlayed);
+    const { stage, isActive: baseIsActive, finalResult } = getTeamCurrentStage(matches, teamName);
+    const groupStats    = getGroupStats(matches, teamName);
+    const groupPoints   = groupStats.points;
+    const groupPos      = allGroupPositions.get(teamName);
+    const groupPosition = stage === 'GROUP_STAGE' ? groupPos?.position : undefined;
+
+    // Override isActive for mathematically-eliminated 4th-place teams before game 3
+    let isActive = baseIsActive;
+    if (stage === 'GROUP_STAGE' && baseIsActive && groupPos?.position === 4) {
+      const thirdTeamEntry = [...allGroupPositions.entries()].find(
+        ([, p]) => p.groupName === groupPos.groupName && p.position === 3
+      );
+      if (thirdTeamEntry && isMathematicallyEliminated(teamName, thirdTeamEntry[0], matches)) {
+        isActive = false;
+      }
+    }
+
+    // Compute third-place rank (1-indexed, 1=best) for use in getRankScore
+    const thirdPlaceRank =
+      groupPosition === 3
+        ? thirdPlaceTable.indexOf(teamName) + 1 // indexOf returns -1 if missing → +1 = 0 (safe fallback)
+        : undefined;
+
+    const rankScore = getRankScore(stage, isActive, finalResult, groupPoints, groupPosition, thirdPlaceRank);
+
+    // Derive status
+    let status: ParticipantStatus;
+    if (stage !== 'GROUP_STAGE') {
+      status = isActive ? 'active' : 'eliminated';
+    } else if (!isActive) {
+      status = 'eliminated';
+    } else if (groupPosition === 4) {
+      status = 'at_risk';
+    } else if (groupPosition === 3) {
+      status = thirdPlaceRank !== undefined && thirdPlaceRank <= 8 ? 'active' : 'at_risk';
+    } else {
+      status = 'active';
+    }
 
     const eliminatedDate = getEliminationDate(matches, teamName, stage, isActive, finalResult);
-    const status: ParticipantStatus = isActive ? 'active' : 'eliminated';
 
-    return { rank: 0, tied: false, participant, stage, status, rankScore, groupStats, eliminatedDate };
+    return { rank: 0, tied: false, participant, stage, status, rankScore, groupStats, groupPosition, eliminatedDate };
   });
 
   standings.sort((a, b) => {
