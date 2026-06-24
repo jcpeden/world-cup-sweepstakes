@@ -105,7 +105,7 @@ export function Leaderboard({ standings }: LeaderboardProps) {
             Still In ({active.length})
           </div>
           {active.map(s => (
-            <StandingRow key={s.participant.name} standing={s} />
+            <StandingRow key={s.participant.team} standing={s} />
           ))}
         </div>
       )}
@@ -115,7 +115,7 @@ export function Leaderboard({ standings }: LeaderboardProps) {
             Eliminated ({eliminated.length})
           </div>
           {eliminated.map(s => (
-            <StandingRow key={s.participant.name} standing={s} />
+            <StandingRow key={s.participant.team} standing={s} />
           ))}
           {(() => {
             const timelineEntries = eliminated
@@ -131,7 +131,7 @@ export function Leaderboard({ standings }: LeaderboardProps) {
                 </div>
                 <ul className="overflow-y-auto max-h-60">
                   {timelineEntries.map(s => (
-                    <li key={s.participant.name} className="px-4 py-2 text-xs text-gray-500 border-b border-gray-50 last:border-0">
+                    <li key={s.participant.team} className="px-4 py-2 text-xs text-gray-500 border-b border-gray-50 last:border-0">
                       {s.participant.flag}{' '}
                       <span className="font-medium text-gray-700">{s.participant.team}</span>
                       {' '}eliminated —{' '}
