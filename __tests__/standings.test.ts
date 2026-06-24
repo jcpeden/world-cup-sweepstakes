@@ -1,4 +1,4 @@
-import { computeStandings, isMathematicallyEliminated } from '@/lib/standings';
+import { computeStandings, isMathematicallyEliminated, rankGroupTeams } from '@/lib/standings';
 import type { Match } from '@/lib/types';
 
 function makeMatch(
@@ -363,6 +363,63 @@ describe('computeStandings', () => {
       const nelson = standings.find(s => s.participant.name === 'Nelson')!; // Argentina
       expect(nelson.status).toBe('eliminated');
       expect(nelson.eliminatedDate).toBe('2026-06-24T20:00:00Z');
+    });
+  });
+
+  describe('rankGroupTeams', () => {
+    it('ranks by points descending', () => {
+      const matches: Match[] = [
+        makeMatch('Argentina', 'Algeria',  { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } } }),
+        makeMatch('Austria',   'Jordan',   { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+        makeMatch('Argentina', 'Austria',  { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+        makeMatch('Algeria',   'Jordan',   { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+      ];
+      // Argentina: 6pts, Algeria: 3pts, Austria: 3pts, Jordan: 0pts
+      const ranked = rankGroupTeams(['Argentina', 'Algeria', 'Austria', 'Jordan'], matches);
+      expect(ranked[0]).toBe('Argentina');
+      expect(ranked[3]).toBe('Jordan');
+    });
+
+    it('uses goal difference as secondary tiebreaker', () => {
+      const matches: Match[] = [
+        // Algeria: 3pts, GD +2 (won 3-1)
+        makeMatch('Algeria', 'Jordan',    { score: { winner: 'HOME_TEAM', fullTime: { home: 3, away: 1 } } }),
+        // Austria: 3pts, GD +1 (won 2-1)
+        makeMatch('Austria', 'Argentina', { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 1 } } }),
+      ];
+      const ranked = rankGroupTeams(['Algeria', 'Austria', 'Argentina', 'Jordan'], matches);
+      // Algeria (3pts, GD+2) above Austria (3pts, GD+1)
+      expect(ranked.indexOf('Algeria')).toBeLessThan(ranked.indexOf('Austria'));
+    });
+
+    it('uses goals scored as tertiary tiebreaker', () => {
+      const matches: Match[] = [
+        // Algeria: 3pts, GD +1 (won 2-1)
+        makeMatch('Algeria', 'Jordan',    { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 1 } } }),
+        // Austria: 3pts, GD +1 (won 3-2) — same GD, more goals
+        makeMatch('Austria', 'Argentina', { score: { winner: 'HOME_TEAM', fullTime: { home: 3, away: 2 } } }),
+      ];
+      const ranked = rankGroupTeams(['Algeria', 'Austria', 'Argentina', 'Jordan'], matches);
+      // Austria (3pts, GD+1, GF=3) above Algeria (3pts, GD+1, GF=2)
+      expect(ranked.indexOf('Austria')).toBeLessThan(ranked.indexOf('Algeria'));
+    });
+
+    it('uses H2H points as quaternary tiebreaker', () => {
+      // Algeria and Austria both: 3pts, GD+1, GF=2 from non-H2H matches
+      // But Algeria beat Austria H2H → Algeria wins tiebreaker
+      const matches: Match[] = [
+        makeMatch('Algeria', 'Jordan',    { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 1 } } }),
+        makeMatch('Austria', 'Argentina', { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 1 } } }),
+        makeMatch('Algeria', 'Austria',   { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+      ];
+      const ranked = rankGroupTeams(['Algeria', 'Austria', 'Argentina', 'Jordan'], matches);
+      expect(ranked.indexOf('Algeria')).toBeLessThan(ranked.indexOf('Austria'));
+    });
+
+    it('falls back to alphabetical when all tiebreakers exhausted', () => {
+      // All 4 teams with 0 pts and no matches
+      const ranked = rankGroupTeams(['Jordan', 'Austria', 'Algeria', 'Argentina'], []);
+      expect(ranked).toEqual(['Algeria', 'Argentina', 'Austria', 'Jordan']);
     });
   });
 

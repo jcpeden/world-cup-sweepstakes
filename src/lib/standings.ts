@@ -181,6 +181,79 @@ export function isMathematicallyEliminated(
   return thirdWon;
 }
 
+function getH2HStats(teamName: string, opponents: string[], matches: Match[]): GroupStats {
+  const h2hMatches = matches.filter(
+    m =>
+      m.stage === 'GROUP_STAGE' &&
+      m.status === 'FINISHED' &&
+      ((m.homeTeam.name === teamName  && opponents.includes(m.awayTeam.name)) ||
+       (m.awayTeam.name === teamName  && opponents.includes(m.homeTeam.name)))
+  );
+
+  return h2hMatches.reduce<GroupStats>(
+    (stats, m) => {
+      const isHome = m.homeTeam.name === teamName;
+      const gf = isHome ? (m.score.fullTime.home ?? 0) : (m.score.fullTime.away ?? 0);
+      const ga = isHome ? (m.score.fullTime.away ?? 0) : (m.score.fullTime.home ?? 0);
+
+      if (m.score.winner === 'DRAW') {
+        return { ...stats, drawn: stats.drawn + 1, points: stats.points + 1,
+          goalsFor: stats.goalsFor + gf, goalsAgainst: stats.goalsAgainst + ga,
+          goalDifference: stats.goalDifference + (gf - ga) };
+      }
+      if (m.score.winner === null) return stats;
+      const won = isHome ? m.score.winner === 'HOME_TEAM' : m.score.winner === 'AWAY_TEAM';
+      return won
+        ? { ...stats, won: stats.won + 1, points: stats.points + 3,
+            goalsFor: stats.goalsFor + gf, goalsAgainst: stats.goalsAgainst + ga,
+            goalDifference: stats.goalDifference + (gf - ga) }
+        : { ...stats, lost: stats.lost + 1,
+            goalsFor: stats.goalsFor + gf, goalsAgainst: stats.goalsAgainst + ga,
+            goalDifference: stats.goalDifference + (gf - ga) };
+    },
+    { won: 0, drawn: 0, lost: 0, points: 0, goalsFor: 0, goalsAgainst: 0, goalDifference: 0 }
+  );
+}
+
+function compareByStats(sa: GroupStats, sb: GroupStats): number {
+  if (sb.points       !== sa.points)       return sb.points       - sa.points;
+  if (sb.goalDifference !== sa.goalDifference) return sb.goalDifference - sa.goalDifference;
+  if (sb.goalsFor     !== sa.goalsFor)     return sb.goalsFor     - sa.goalsFor;
+  return 0;
+}
+
+export function rankGroupTeams(groupTeams: string[], matches: Match[]): string[] {
+  const stats = new Map(groupTeams.map(t => [t, getGroupStats(matches, t)]));
+
+  // Step 1: Sort by overall criteria (pts → GD → GF → alphabetical fallback)
+  const sorted = [...groupTeams].sort((a, b) => {
+    const cmp = compareByStats(stats.get(a)!, stats.get(b)!);
+    return cmp !== 0 ? cmp : a.localeCompare(b);
+  });
+
+  // Step 2: Apply H2H tiebreaker within tied subgroups
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i + 1;
+    while (j < sorted.length && compareByStats(stats.get(sorted[i])!, stats.get(sorted[j])!) === 0) j++;
+
+    if (j - i > 1) {
+      const tiedGroup = sorted.slice(i, j);
+      const h2hStats = new Map(
+        tiedGroup.map(t => [t, getH2HStats(t, tiedGroup.filter(o => o !== t), matches)])
+      );
+      tiedGroup.sort((a, b) => {
+        const cmp = compareByStats(h2hStats.get(a)!, h2hStats.get(b)!);
+        return cmp !== 0 ? cmp : a.localeCompare(b);
+      });
+      for (let k = 0; k < tiedGroup.length; k++) sorted[i + k] = tiedGroup[k];
+    }
+    i = j;
+  }
+
+  return sorted;
+}
+
 function getEliminationDate(
   matches: Match[],
   teamName: string,
