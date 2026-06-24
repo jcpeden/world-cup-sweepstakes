@@ -147,6 +147,40 @@ function getGroupStats(matches: Match[], teamName: string): GroupStats {
   );
 }
 
+export function isMathematicallyEliminated(
+  fourthTeamName: string,
+  thirdTeamName: string,
+  matches: Match[]
+): boolean {
+  const fourthPts = getGroupStats(matches, fourthTeamName).points;
+  const thirdPts = getGroupStats(matches, thirdTeamName).points;
+
+  const fourthMax = fourthPts + 3; // best case: win game 3
+  const thirdMin = thirdPts;      // worst case: lose game 3
+
+  if (fourthMax < thirdMin) return true;
+  if (fourthMax > thirdMin) return false;
+
+  // Equal: tiebreaker is H2H
+  const h2h = matches.find(
+    m =>
+      m.stage === 'GROUP_STAGE' &&
+      m.status === 'FINISHED' &&
+      ((m.homeTeam.name === fourthTeamName && m.awayTeam.name === thirdTeamName) ||
+       (m.homeTeam.name === thirdTeamName && m.awayTeam.name === fourthTeamName))
+  );
+
+  if (!h2h) return false; // H2H not yet played
+
+  if (h2h.score.winner === null || h2h.score.winner === 'DRAW') return false;
+
+  const thirdWon =
+    (h2h.homeTeam.name === thirdTeamName && h2h.score.winner === 'HOME_TEAM') ||
+    (h2h.awayTeam.name === thirdTeamName && h2h.score.winner === 'AWAY_TEAM');
+
+  return thirdWon;
+}
+
 function getEliminationDate(
   matches: Match[],
   teamName: string,

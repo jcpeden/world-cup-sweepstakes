@@ -1,4 +1,4 @@
-import { computeStandings } from '@/lib/standings';
+import { computeStandings, isMathematicallyEliminated } from '@/lib/standings';
 import type { Match } from '@/lib/types';
 
 function makeMatch(
@@ -363,6 +363,58 @@ describe('computeStandings', () => {
       const nelson = standings.find(s => s.participant.name === 'Nelson')!; // Argentina
       expect(nelson.status).toBe('eliminated');
       expect(nelson.eliminatedDate).toBe('2026-06-24T20:00:00Z');
+    });
+  });
+
+  describe('isMathematicallyEliminated', () => {
+    // Haiti/Scotland scenario: 4th has 0pts, 3rd has 3pts, gap is larger than 3 → eliminated on points gap alone
+    it('returns true when 4th cannot catch 3rd on points alone', () => {
+      const matches: Match[] = [
+        // Scotland (3rd) beat Haiti (4th) — H2H settled
+        makeMatch('Scotland', 'Haiti', { score: { winner: 'HOME_TEAM', fullTime: { home: 2, away: 0 } } }),
+        // Scotland also beat someone else → 6pts total
+        makeMatch('Scotland', 'Brazil', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+      ];
+      // Haiti: 0pts. Scotland: 6pts. fourthMax=3, thirdMin=6 → 3 < 6 → eliminated
+      expect(isMathematicallyEliminated('Haiti', 'Scotland', matches)).toBe(true);
+    });
+
+    it('returns true when equal on best-case points and 3rd won H2H', () => {
+      const matches: Match[] = [
+        // Scotland (3rd) has 3pts, Haiti (4th) has 0pts
+        // fourthMax = 0+3 = 3, thirdMin = 3+0 = 3 → equal → check H2H
+        makeMatch('Scotland', 'Brazil', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+        makeMatch('Scotland', 'Haiti', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+      ];
+      expect(isMathematicallyEliminated('Haiti', 'Scotland', matches)).toBe(true);
+    });
+
+    it('returns false when H2H between 3rd and 4th has not been played', () => {
+      const matches: Match[] = [
+        // Scotland (3rd) has 3pts from a different match, H2H not played yet
+        makeMatch('Scotland', 'Brazil', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+      ];
+      // fourthMax=3, thirdMin=3 → equal, but H2H not found → not eliminated
+      expect(isMathematicallyEliminated('Haiti', 'Scotland', matches)).toBe(false);
+    });
+
+    it('returns false when 4th can overtake 3rd on points alone', () => {
+      const matches: Match[] = [
+        // Scotland (3rd) has 1pt (drew), Haiti (4th) has 0pts
+        // fourthMax = 3, thirdMin = 1 → 3 > 1 → can overtake
+        makeMatch('Scotland', 'Brazil', { score: { winner: 'DRAW', fullTime: { home: 1, away: 1 } } }),
+      ];
+      expect(isMathematicallyEliminated('Haiti', 'Scotland', matches)).toBe(false);
+    });
+
+    it('returns false when 4th won the H2H against 3rd', () => {
+      const matches: Match[] = [
+        // Scotland (3rd, 3pts from other match), Haiti beat Scotland H2H (so Haiti has 3pts too)
+        makeMatch('Scotland', 'Brazil', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+        makeMatch('Haiti', 'Scotland', { score: { winner: 'HOME_TEAM', fullTime: { home: 1, away: 0 } } }),
+      ];
+      // fourthMax = 3+3 = 6, thirdMin = 3+0 = 3 → 6 > 3 → can overtake on points
+      expect(isMathematicallyEliminated('Haiti', 'Scotland', matches)).toBe(false);
     });
   });
 });
