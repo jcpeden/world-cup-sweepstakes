@@ -34,8 +34,7 @@ function getRankScore(
   if (stage === 'GROUP_STAGE') {
     if (!isActive) return groupPoints / 10; // eliminated tier: 0.0–0.9
     const pts = groupPoints / 10;
-    if (groupPosition === 1) return 14 + pts;
-    if (groupPosition === 2) return 10 + pts;
+    if (groupPosition === 1 || groupPosition === 2) return 10 + pts + (groupPosition === 1 ? 0.05 : 0);
     if (groupPosition === 3) {
       const safe = thirdPlaceRank !== undefined && thirdPlaceRank <= 8;
       return safe ? 7 + pts : 4 + pts;

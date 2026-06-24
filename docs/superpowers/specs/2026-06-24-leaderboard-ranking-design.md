@@ -142,20 +142,19 @@ export type ParticipantStatus = 'active' | 'at_risk' | 'eliminated';
 
 ### Rank score tiers (GROUP_STAGE only)
 
-All group stage scores occupy the range 0–18.9, staying below LAST_32 = 20.
+All group stage scores occupy the range 0–10.95, staying below LAST_32 = 20.
 
-| Tier | Status | Base | Fractional | Range |
-|---|---|---|---|---|
-| Eliminated | `eliminated` | 0 | pts / 10 | 0.0 – 0.9 |
-| At risk, 4th place | `at_risk` | 2 | pts / 10 | 2.0 – 2.9 |
-| At risk, 3rd place (bottom 4) | `at_risk` | 4 | pts / 10 | 4.0 – 4.9 |
-| Active, 3rd place (top 8) | `active` | 7 | pts / 10 | 7.0 – 7.9 |
-| Active, 2nd place | `active` | 10 | pts / 10 | 10.0 – 10.9 |
-| Active, 1st place | `active` | 14 | pts / 10 | 14.0 – 14.9 |
+| Tier | Status | Base | Fractional | Position bonus | Range |
+|---|---|---|---|---|---|
+| Eliminated | `eliminated` | 0 | pts / 10 | — | 0.00 – 0.90 |
+| At risk, 4th place | `at_risk` | 2 | pts / 10 | — | 2.00 – 2.90 |
+| At risk, 3rd place (bottom 4) | `at_risk` | 4 | pts / 10 | — | 4.00 – 4.90 |
+| Active, 3rd place (top 8) | `active` | 7 | pts / 10 | — | 7.00 – 7.90 |
+| Active, 1st or 2nd place | `active` | 10 | pts / 10 | +0.05 if 1st | 10.00 – 10.95 |
 
-Minimum gap between adjacent tiers = 1.1 (> max fractional of 0.9). No tier bleeding is possible.
+1st and 2nd place share one pool ranked primarily by points. Group position is a secondary tiebreaker only (0.05 bonus for 1st place, which is less than one point's worth of pts/10 = 0.10 — so any points difference overrides position).
 
-The old `(3 - gamesPlayed) / 10` component is removed. Points is the sole within-tier tiebreaker.
+The old `(3 - gamesPlayed) / 10` component is removed. Points is the primary within-pool tiebreaker.
 
 ### Status assignment logic (GROUP_STAGE)
 
