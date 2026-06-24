@@ -164,7 +164,6 @@ export const draw: Participant[] = [
   {
     name: "Nadia",
     team: "Czechia",
-    apiName: "Czech Republic",
     flag: "🇨🇿",
     avatar:
       "https://avatars.slack-edge.com/2024-09-04/7676551397378_43271337e04cbe525efa_192.png",

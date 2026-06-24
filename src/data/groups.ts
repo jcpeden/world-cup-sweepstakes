@@ -4,7 +4,7 @@ export interface Group {
 }
 
 export const groups: Group[] = [
-  { name: 'Group A', teams: ['Mexico', 'South Africa', 'South Korea', 'Czech Republic'] },
+  { name: 'Group A', teams: ['Mexico', 'South Africa', 'South Korea', 'Czechia'] },
   { name: 'Group B', teams: ['Canada', 'Bosnia-Herzegovina', 'Qatar', 'Switzerland'] },
   { name: 'Group C', teams: ['Brazil', 'Morocco', 'Haiti', 'Scotland'] },
   { name: 'Group D', teams: ['USA', 'Paraguay', 'Australia', 'Turkey'] },
