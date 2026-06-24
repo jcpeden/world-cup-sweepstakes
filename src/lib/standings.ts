@@ -323,16 +323,15 @@ export function computeStandings(matches: Match[]): ParticipantStanding[] {
       const thirdTeamEntry = [...allGroupPositions.entries()].find(
         ([, p]) => p.groupName === groupPos.groupName && p.position === 3
       );
-      if (thirdTeamEntry && isMathematicallyEliminated(teamName, thirdTeamEntry[0], matches)) {
+      if (!thirdTeamEntry) throw new Error(`No 3rd-place team found in ${groupPos.groupName}`);
+      if (isMathematicallyEliminated(teamName, thirdTeamEntry[0], matches)) {
         isActive = false;
       }
     }
 
     // Compute third-place rank (1-indexed, 1=best) for use in getRankScore
-    const thirdPlaceRank =
-      groupPosition === 3
-        ? thirdPlaceTable.indexOf(teamName) + 1 // indexOf returns -1 if missing → +1 = 0 (safe fallback)
-        : undefined;
+    const idx = groupPosition === 3 ? thirdPlaceTable.indexOf(teamName) : -1;
+    const thirdPlaceRank = idx === -1 ? undefined : idx + 1;
 
     const rankScore = getRankScore(stage, isActive, finalResult, groupPoints, groupPosition, thirdPlaceRank);
 
