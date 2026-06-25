@@ -332,6 +332,19 @@ export function computeStandings(matches: Match[]): ParticipantStanding[] {
     const idx = groupPosition === 3 ? thirdPlaceTable.indexOf(teamName) : -1;
     const thirdPlaceRank = idx === -1 ? undefined : idx + 1;
 
+    // Restore isActive for qualified group-stage teams awaiting LAST_32 assignment.
+    // getTeamCurrentStage() sets isActive=false once 3 group games are played, but 1st/2nd
+    // place teams and top-8 third-place teams have qualified even though LAST_32 bracket
+    // entries don't exist in the API data yet.
+    if (stage === 'GROUP_STAGE' && !isActive && groupPos !== undefined) {
+      const pos = groupPos.position;
+      if (pos === 1 || pos === 2) {
+        isActive = true;
+      } else if (pos === 3 && thirdPlaceRank !== undefined && thirdPlaceRank <= 8) {
+        isActive = true;
+      }
+    }
+
     const rankScore = getRankScore(stage, isActive, finalResult, groupPoints, groupPosition, thirdPlaceRank);
 
     // Derive status
