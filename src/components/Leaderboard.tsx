@@ -1,7 +1,17 @@
 'use client';
 
-import type { ParticipantStanding } from '@/lib/types';
+import type { ParticipantStanding, TournamentStage } from '@/lib/types';
 import { STAGE_LABELS } from '@/lib/stageLabels';
+
+const STAGE_ORDER: TournamentStage[] = [
+  'FINAL',
+  'THIRD_PLACE',
+  'SEMI_FINALS',
+  'QUARTER_FINALS',
+  'LAST_16',
+  'LAST_32',
+  'GROUP_STAGE',
+];
 
 function formatEliminationDate(utcDate: string): string {
   return new Date(utcDate).toLocaleDateString('en-GB', {
@@ -40,19 +50,14 @@ function StatusBadge({ standing }: { standing: ParticipantStanding }) {
       </span>
     );
   }
-  if (standing.status === 'active') {
+  if (standing.status === 'active' && standing.stage !== 'GROUP_STAGE') {
     return (
-      <span className="bg-green-100 text-green-800 text-xs font-semibold px-2 py-0.5 rounded-full">
-        Active
+      <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-0.5 rounded-full">
+        {STAGE_LABELS[standing.stage]}
       </span>
     );
   }
-  const stageLabel = standing.stage === 'GROUP_STAGE' ? '' : ` · ${STAGE_LABELS[standing.stage]}`;
-  return (
-    <span className="bg-red-100 text-red-700 text-xs px-2 py-0.5 rounded-full">
-      Out{stageLabel}
-    </span>
-  );
+  return null;
 }
 
 function StandingRow({ standing }: { standing: ParticipantStanding }) {
@@ -94,55 +99,56 @@ interface LeaderboardProps {
 }
 
 export function Leaderboard({ standings }: LeaderboardProps) {
-  const active = standings.filter(s => s.status !== 'eliminated');
-  const eliminated = standings.filter(s => s.status === 'eliminated');
+  const activeSections = STAGE_ORDER
+    .map(stage => ({ stage, entries: standings.filter(s => s.status !== 'eliminated' && s.stage === stage) }))
+    .filter(s => s.entries.length > 0);
+
+  const eliminatedSections = STAGE_ORDER
+    .map(stage => ({ stage, entries: standings.filter(s => s.status === 'eliminated' && s.stage === stage) }))
+    .filter(s => s.entries.length > 0);
+
+  const timelineEntries = standings
+    .filter(s => s.status === 'eliminated' && s.eliminatedDate !== undefined)
+    .sort((a, b) => new Date(b.eliminatedDate!).getTime() - new Date(a.eliminatedDate!).getTime());
 
   return (
     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-      {active.length > 0 && (
-        <div>
+      {activeSections.map(({ stage, entries }, i) => (
+        <div key={stage} className={i > 0 ? 'border-t border-gray-100' : ''}>
           <div className="bg-green-50 px-4 py-2 text-xs font-semibold text-green-700 uppercase tracking-wider">
-            Still In ({active.length})
+            {STAGE_LABELS[stage]} ({entries.length})
           </div>
-          {active.map(s => (
+          {entries.map(s => (
             <StandingRow key={s.participant.team} standing={s} />
           ))}
         </div>
-      )}
-      {eliminated.length > 0 && (
-        <div>
-          <div className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider border-t border-gray-100">
-            Eliminated ({eliminated.length})
+      ))}
+      {eliminatedSections.map(({ stage, entries }, i) => (
+        <div key={stage} className="border-t border-gray-100">
+          <div className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            Out · {STAGE_LABELS[stage]} ({entries.length})
           </div>
-          {eliminated.map(s => (
+          {entries.map(s => (
             <StandingRow key={s.participant.team} standing={s} />
           ))}
-          {(() => {
-            const timelineEntries = eliminated
-              .filter(s => s.eliminatedDate !== undefined)
-              .sort((a, b) =>
-                new Date(b.eliminatedDate!).getTime() - new Date(a.eliminatedDate!).getTime()
-              );
-            if (timelineEntries.length === 0) return null;
-            return (
-              <div className="border-t border-gray-100 mt-1">
-                <div className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
-                  Timeline
-                </div>
-                <ul className="overflow-y-auto max-h-60">
-                  {timelineEntries.map(s => (
-                    <li key={s.participant.team} className="px-4 py-2 text-xs text-gray-500 border-b border-gray-50 last:border-0">
-                      {s.participant.flag}{' '}
-                      <span className="font-medium text-gray-700">{s.participant.team}</span>
-                      {' '}eliminated —{' '}
-                      <span className="font-medium">{s.participant.name}</span>
-                      {' '}out — {STAGE_LABELS[s.stage] ?? s.stage} · {formatEliminationDate(s.eliminatedDate!)}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            );
-          })()}
+        </div>
+      ))}
+      {timelineEntries.length > 0 && (
+        <div className="border-t border-gray-100">
+          <div className="bg-gray-50 px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            Timeline
+          </div>
+          <ul className="overflow-y-auto max-h-60">
+            {timelineEntries.map(s => (
+              <li key={s.participant.team} className="px-4 py-2 text-xs text-gray-500 border-b border-gray-50 last:border-0">
+                {s.participant.flag}{' '}
+                <span className="font-medium text-gray-700">{s.participant.team}</span>
+                {' '}eliminated —{' '}
+                <span className="font-medium">{s.participant.name}</span>
+                {' '}out — {STAGE_LABELS[s.stage] ?? s.stage} · {formatEliminationDate(s.eliminatedDate!)}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
     </div>
